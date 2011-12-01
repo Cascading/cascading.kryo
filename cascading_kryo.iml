@@ -15,10 +15,12 @@
       <library>
         <CLASSES>
           <root url="file://$MODULE_DIR$/lib" />
+          <root url="file://$MODULE_DIR$/lib/dev" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
         <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/lib/dev" recursive="false" />
       </library>
     </orderEntry>
   </component>

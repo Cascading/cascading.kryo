@@ -1,5 +1,6 @@
 (defproject cascading.kryo "0.1.0"
   :description "Kryo serialization for Cascading."
+  :source-path "src/clj"
   :java-source-path "src/jvm"
   :javac-options {:debug "true" :fork "true"}
   :repositories {"conjars" "http://conjars.org/repo"}
