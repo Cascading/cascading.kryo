@@ -1,6 +1,6 @@
 # cascading.kryo
 
-Cascading.Kryo provides a drop-in serialization for using Kryo objects in your Hadoop workflow.
+Cascading.Kryo provides a drop-in [Kryo](http://code.google.com/p/kryo/) serialization for your Cascading (or Hadoop) workflow.
 
 ## Usage
 
