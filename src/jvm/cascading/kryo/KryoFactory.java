@@ -23,19 +23,16 @@ public class KryoFactory {
     private static final int FINAL_CAPACITY = 2000000000;
 
     /**
-     * FIELDS_SERIALIZATIONS holds a comma-separated list of classes to register with Kryo
-     * with no custom serializater. Usually this causes Kryo to default to its FieldsSerializer,
-     * which is similar to java Serialization.
+     * KRYO_SERIALIZATIONS holds a colon-separated list of classes to register with Kryo.
+     * For example:
+     *
+     * "someClass,someSerializer:otherClass:thirdClass,thirdSerializer"
+     *
+     * would register someClass and thirdClass with custom serializers and otherClass with
+     * Kryo's FieldsSerializer. The FieldsSerializer requires the class to
+     * implement a default constructor.
      */
-    public static final String FIELDS_SERIALIZATIONS = "cascading.kryo.fields.serializations";
-
-    /**
-     * SERIALIZATION_PAIRS holds a comma-separated list of alternating
-     * klassName & kryoSerializationClassName. Use this key to specify custom serializaters for
-     * various classes.
-     */
-    public static final String SERIALIZATION_PAIRS = "cascading.kryo.serialization.pairs";
-
+    public static final String KRYO_SERIALIZATIONS = "cascading.kryo.serializations";
 
     /**
      * If SKIP_MISSING is set to true, Kryo won't throw an error when Cascading tries to register
@@ -49,45 +46,29 @@ public class KryoFactory {
      */
     public static final String ACCEPT_ALL = "cascading.kryo.accept.all";
 
-
-    /**
-     * Converts the supplied sequence of registrations into a comma-separated list and stores
-     * it in the supplied JobConf under FIELDS_SERIALIZATIONS.
-     *
-     * @param conf: Hadoop JobConf.
-     * @param registrations: an ArrayList of class names to register with Kryo.
-     */
-    public void setFieldsSerializations(JobConf conf, ArrayList<String> registrations) {
-        int i = 0;
-        int finalIdx = registrations.size() - 1;
-
-        StringBuilder builder = new StringBuilder();
-        for (String klassName: registrations) {
-            builder.append(klassName);
-            if (i++ != finalIdx)
-                builder.append(",");
-        }
-        conf.set(FIELDS_SERIALIZATIONS, builder.toString());
-    }
-
     /**
      * Encodes the supplied registrations HashMap as a comma-separated list of alternating keys
      * and values and stores this in the JobConf under the SERIALIZATION_PAIRS key.
      * @param conf: Hadoop JobConf.
-     * @param registrations: HashMap of className -> kryoSerializerClassName
+     * @param registrations: HashMap of className -> kryoSerializerClassName || null
      */
-    public void setSerializationPairs(JobConf conf, HashMap<String, String> registrations) {
+    public void setSerializations(JobConf conf, HashMap<String, String> registrations) {
         int i = 0;
         int finalIdx = registrations.size() - 1;
         StringBuilder builder = new StringBuilder();
+
         for(String klassName: registrations.keySet()) {
             String serializerClassName = registrations.get(klassName);
-            builder.append(klassName + "," + serializerClassName);
+            builder.append(klassName);
+
+            if (serializerClassName != null)
+                builder.append("," + serializerClassName);
+
             if (i++ != finalIdx)
-                builder.append(",");
+                builder.append(":");
         }
         
-        conf.set(SERIALIZATION_PAIRS, builder.toString());
+        conf.set(KRYO_SERIALIZATIONS, builder.toString());
     }
 
     /**
@@ -97,25 +78,18 @@ public class KryoFactory {
      * @return HashMap of [klassName, kryoSerializationClassName] pairs
      */
     public HashMap getSerializations(JobConf conf) {
-        String pairString = conf.get(SERIALIZATION_PAIRS, "");
-        String fieldString = conf.get(FIELDS_SERIALIZATIONS, "");
+        String serializationString = conf.get(KRYO_SERIALIZATIONS, "");
         HashMap<String, String> builder = new HashMap<String, String>();
 
         // Build up a HashMap of class, serializerClass string pairs.
         String key = null;
-        for (String s: pairString.split(",")) {
-            if (key == null)
-                key = s;
-            else {
-                builder.put(key, s);
-                key = null;
-            }
+        for (String s: serializationString.split(":")) {
+            String[] pair = s.split(",");
+            if (pair.length == 2)
+                builder.put(pair[0], pair[1]);
+            else
+                builder.put(pair[0], null);
         }
-
-        // Add all classes with no specific serializations
-        for (String s: fieldString.split(","))
-            builder.put(s, null);
-
         return builder;
     }
 
