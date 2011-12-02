@@ -41,6 +41,4 @@ When `cascading.kryo.accept.all` is true, Cascading.Kryo will accept any class t
 
 ## License
 
-Copyright (C) 2011 Sam Ritchie
-
 Distributed under the Eclipse Public License, the same as Clojure.
