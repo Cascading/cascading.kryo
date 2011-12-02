@@ -29,7 +29,7 @@ public class KryoFactory {
      * "someClass,someSerializer:otherClass:thirdClass,thirdSerializer"
      *
      * would register someClass and thirdClass with custom serializers and otherClass with
-     * Kryo's FieldsSerializer. The FieldsSerializer requires the class to
+     * Kryo's FieldSerializer. The FieldSerializer requires the class to
      * implement a default constructor.
      */
     public static final String KRYO_SERIALIZATIONS = "cascading.kryo.serializations";
@@ -72,8 +72,7 @@ public class KryoFactory {
     }
 
     /**
-     * Retrieves all Kryo serializations from the JobConf as a HashMap. Serialization pairs
-     * are added as proper key-value pairs, while the Fields serializations all use null values.
+     * Retrieves all Kryo serializations from the JobConf as a HashMap.
      * @param conf: Hadoop jobConf
      * @return HashMap of [klassName, kryoSerializationClassName] pairs
      */

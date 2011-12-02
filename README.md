@@ -18,7 +18,7 @@ To provide custom registrations to Kryo, set `cascading.kryo.registrations` to a
 
     "someClass,someSerializer:otherClass:thirdClass,thirdSerializer"
 
-would register `someClass` and `thirdClass` to use their respective custom serializers, and `otherClass` to use Kryo's `FieldsSerializer`. The FieldsSerializer requires the class to implement a default constructor. See the [Kryo page](http://code.google.com/p/kryo/) for more information.
+would register `someClass` and `thirdClass` to use their respective custom serializers, and `otherClass` to use Kryo's `FieldSerializer`. The FieldSerializer requires the class to implement a default constructor. See the [Kryo page](http://code.google.com/p/kryo/) for more information.
 
 `cascading.kryo.KryoFactory` provides the following helper methods:
 
