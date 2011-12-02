@@ -108,7 +108,7 @@ public class KryoFactory {
     }
 
     public boolean getAcceptAll(JobConf conf) {
-        return conf.getBoolean(ACCEPT_ALL, false);
+        return conf.getBoolean(ACCEPT_ALL, true);
     }
 
     public static ObjectBuffer newBuffer(Kryo k) {
