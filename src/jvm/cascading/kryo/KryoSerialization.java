@@ -7,11 +7,14 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.JobConf;
+import org.apache.log4j.Logger;
 
 import java.util.HashMap;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization {
+    public static final Logger LOG = Logger.getLogger(KryoSerialization.class);
+
     HashMap registrations;
     boolean skipMissing, acceptAll;
     Kryo kryo;

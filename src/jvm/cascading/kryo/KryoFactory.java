@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 /** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
-    public static final Logger LOG = Logger.getLogger(KryoSerializer.class);
+    public static final Logger LOG = Logger.getLogger(KryoFactory.class);
 
     /**
      * Initial capacity of the Kryo object buffer, used for deserializing tuple entries.
@@ -78,8 +78,10 @@ public class KryoFactory {
      * @return HashMap of [klassName, kryoSerializationClassName] pairs
      */
     public HashMap getSerializations(JobConf conf) {
-        String serializationString = conf.get(KRYO_SERIALIZATIONS, "");
+        String serializationString = conf.get(KRYO_SERIALIZATIONS);
         HashMap<String, String> builder = new HashMap<String, String>();
+
+        if (serializationString == null) return builder;
 
         // Build up a HashMap of class, serializerClass string pairs.
         String key = null;
