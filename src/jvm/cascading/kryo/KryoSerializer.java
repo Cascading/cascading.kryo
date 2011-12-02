@@ -6,7 +6,6 @@ import org.apache.hadoop.io.serializer.Serializer;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashMap;
 
 /** User: sritchie Date: 12/1/11 Time: 11:57 AM */
 public class KryoSerializer implements Serializer {

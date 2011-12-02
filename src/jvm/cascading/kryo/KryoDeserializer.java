@@ -6,7 +6,6 @@ import org.apache.hadoop.io.serializer.Deserializer;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
 
 /** User: sritchie Date: 12/1/11 Time: 3:15 PM */
 public class KryoDeserializer implements Deserializer {
