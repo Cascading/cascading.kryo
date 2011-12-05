@@ -1,4 +1,4 @@
-(defproject cascading.kryo "0.1.0"
+(defproject cascading.kryo "0.1.1"
   :description "Kryo serialization for Cascading."
   :source-path "src/clj"
   :java-source-path "src/jvm"

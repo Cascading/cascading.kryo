@@ -7,6 +7,7 @@ import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
@@ -76,9 +77,9 @@ public class KryoFactory {
      * @param conf: Hadoop jobConf
      * @return HashMap of [klassName, kryoSerializationClassName] pairs
      */
-    public HashMap getSerializations(JobConf conf) {
+    public LinkedHashMap<String, String> getSerializations(JobConf conf) {
         String serializationString = conf.get(KRYO_SERIALIZATIONS);
-        HashMap<String, String> builder = new HashMap<String, String>();
+        LinkedHashMap<String, String> builder = new LinkedHashMap<String, String>();
 
         if (serializationString == null) return builder;
 
@@ -114,8 +115,8 @@ public class KryoFactory {
         return new ObjectBuffer(k, INIT_CAPACITY, FINAL_CAPACITY);
     }
 
-    public static void populateKryo(
-        Kryo k, HashMap<String, String> registrations, boolean skipMissing, boolean acceptAll) {
+    public static void
+    populateKryo(Kryo k, LinkedHashMap<String, String> registrations, boolean skipMissing, boolean acceptAll) {
         k.setRegistrationOptional(acceptAll);
 
         for(String klassName: registrations.keySet()) {
