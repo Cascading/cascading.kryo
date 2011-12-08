@@ -23,8 +23,8 @@ would register `someClass` and `thirdClass` to use their respective custom seria
 `cascading.kryo.KryoFactory` provides the following helper methods:
 
 ```java
-public void setSerializations(JobConf conf, HashMap<String, String> registrations)
-public HashMap getSerializations(JobConf conf)
+public void setSerializations(JobConf conf, List<List<String>> registrations)
+public List<List<String>> getSerializations(JobConf conf)
 ```
 
 ### cascading.kryo.skip.missing
