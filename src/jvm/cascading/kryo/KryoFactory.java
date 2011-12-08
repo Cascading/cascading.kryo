@@ -62,7 +62,9 @@ public class KryoFactory {
             List<String> registrationPair = pairIter.next();
 
             int size = registrationPair.size();
-            assert (size < 1 || size > 2);
+            if (size < 1 || size > 2) {
+                throw new RuntimeException(registrationPair + " must contain either 1 or 2 entries.");
+            }
 
             for (Iterator<String> it = registrationPair.iterator(); it.hasNext(); ) {
                 builder.append(it.next());
