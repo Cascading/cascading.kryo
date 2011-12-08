@@ -9,13 +9,13 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
-import java.util.LinkedHashMap;
+import java.util.List;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization {
     public static final Logger LOG = Logger.getLogger(KryoSerialization.class);
 
-    LinkedHashMap<String, String> registrations;
+    List<List<String>> registrations;
     boolean skipMissing, acceptAll;
     Kryo kryo;
 

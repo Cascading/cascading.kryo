@@ -2,12 +2,14 @@ package cascading.kryo;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.ObjectBuffer;
+import com.esotericsoftware.kryo.Serializer;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 /** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
@@ -18,7 +20,7 @@ public class KryoFactory {
      */
     private static final int INIT_CAPACITY = 2000;
 
-     /**
+    /**
      * Maximum capacity of the Kryo object buffer.
      */
     private static final int FINAL_CAPACITY = 2000000000;
@@ -48,27 +50,30 @@ public class KryoFactory {
     public static final String ACCEPT_ALL = "cascading.kryo.accept.all";
 
     /**
-     * Encodes the supplied registrations HashMap as a comma-separated list of alternating keys
+     * Encodes the supplied registrations list as a comma-separated list of alternating keys
      * and values and stores this in the JobConf under the SERIALIZATION_PAIRS key.
      * @param conf: Hadoop JobConf.
-     * @param registrations: HashMap of className -> kryoSerializerClassName || null
+     * @param registrations: List of List of [className, kryoSerializerClassName || null]
      */
-    public void setSerializations(JobConf conf, HashMap<String, String> registrations) {
-        int i = 0;
-        int finalIdx = registrations.size() - 1;
+    public void setSerializations(JobConf conf, List<List<String>> registrations) {
         StringBuilder builder = new StringBuilder();
 
-        for(String klassName: registrations.keySet()) {
-            String serializerClassName = registrations.get(klassName);
-            builder.append(klassName);
+        for (Iterator<List<String>> pairIter = registrations.iterator(); pairIter.hasNext(); ) {
+            List<String> registrationPair = pairIter.next();
 
-            if (serializerClassName != null)
-                builder.append("," + serializerClassName);
+            int size = registrationPair.size();
+            assert (size < 1 || size > 2);
 
-            if (i++ != finalIdx)
+            for (Iterator<String> it = registrationPair.iterator(); it.hasNext(); ) {
+                builder.append(it.next());
+                if (it.hasNext()) {
+                    builder.append(",");
+                }
+            }
+            if (pairIter.hasNext())
                 builder.append(":");
         }
-        
+
         conf.set(KRYO_SERIALIZATIONS, builder.toString());
     }
 
@@ -77,20 +82,20 @@ public class KryoFactory {
      * @param conf: Hadoop jobConf
      * @return HashMap of [klassName, kryoSerializationClassName] pairs
      */
-    public LinkedHashMap<String, String> getSerializations(JobConf conf) {
+    public List<List<String>> getSerializations(JobConf conf) {
         String serializationString = conf.get(KRYO_SERIALIZATIONS);
-        LinkedHashMap<String, String> builder = new LinkedHashMap<String, String>();
+        List<List<String>> builder = new ArrayList<List<String>>();
 
         if (serializationString == null) return builder;
 
-        // Build up a HashMap of class, serializerClass string pairs.
+        // Build up a List of class, serializerClass string pairs.
         String key = null;
         for (String s: serializationString.split(":")) {
             String[] pair = s.split(",");
             if (pair.length == 2)
-                builder.put(pair[0], pair[1]);
+                builder.add(Arrays.asList(pair[0], pair[1]));
             else
-                builder.put(pair[0], null);
+                builder.add(Arrays.asList(pair[0]));
         }
         return builder;
     }
@@ -112,29 +117,53 @@ public class KryoFactory {
     }
 
     public static ObjectBuffer newBuffer(Kryo k) {
-        return new ObjectBuffer(k, INIT_CAPACITY, FINAL_CAPACITY);
+        return newBuffer(k, INIT_CAPACITY);
     }
 
-    public static void
-    populateKryo(Kryo k, LinkedHashMap<String, String> registrations, boolean skipMissing, boolean acceptAll) {
+    public static ObjectBuffer newBuffer(Kryo k, int initCapacity) {
+        return newBuffer(k, initCapacity, FINAL_CAPACITY);
+    }
+
+    public static ObjectBuffer newBuffer(Kryo k, int initCapacity, int finalCapacity) {
+        return new ObjectBuffer(k, initCapacity, finalCapacity);
+    }
+
+    public static void populateKryo(Kryo k, List<List<String>> registrations,
+        boolean skipMissing, boolean acceptAll) {
         k.setRegistrationOptional(acceptAll);
 
-        for(String klassName: registrations.keySet()) {
-            String serializerClassName = registrations.get(klassName);
+        for (List<String> registrationPair: registrations) {
+            String className;
+            String serializerClassName = null;
+
+            int size = registrationPair.size();
+            if (size == 1)
+                className = registrationPair.get(0);
+            else if (size == 2) {
+                className = registrationPair.get(0);
+                serializerClassName = registrationPair.get(1);
+            } else {
+                throw new RuntimeException("Too many entries in the Kryo registrations map!");
+            }
+
             try {
-                Class klass = Class.forName(klassName);
+                Class klass = Class.forName(className);
                 Class serializerClass = null;
-                if(serializerClassName!=null)
+
+                if (serializerClassName != null) {
                     serializerClass = Class.forName(serializerClassName);
-                if(serializerClass == null) {
+                }
+
+                if (serializerClass == null) {
                     k.register(klass);
                 } else {
-                    k.register(klass, (com.esotericsoftware.kryo.Serializer) serializerClass.newInstance());
+                    k.register(klass, (Serializer) serializerClass.newInstance());
                 }
 
             } catch (ClassNotFoundException e) {
-                if(skipMissing) {
-                    LOG.info("Could not find serialization or class for " + serializerClassName + ". Skipping registration.");
+                if (skipMissing) {
+                    LOG.info("Could not find serialization or class for " + serializerClassName
+                             + ". Skipping registration.");
                 } else {
                     throw new RuntimeException(e);
                 }
