@@ -159,7 +159,12 @@ public class KryoFactory {
                 if (serializerClass == null) {
                     k.register(klass);
                 } else {
-                    k.register(klass, (Serializer) serializerClass.newInstance());
+                    Serializer serializer = (Serializer) serializerClass.newInstance();
+                    
+                    if (serializer instanceof SerializationFactory) {
+                        serializer = ((SerializationFactory) serializer).makeSerializer(k);
+                    }
+                    k.register(klass, serializer);
                 }
 
             } catch (ClassNotFoundException e) {
