@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /** User: sritchie Date: 12/1/11 Time: 3:15 PM */
-public class KryoDeserializer implements Deserializer {
+public class KryoDeserializer implements Deserializer<Object> {
 
     private DataInputStream inputStream;
     ObjectBuffer kryoBuf;

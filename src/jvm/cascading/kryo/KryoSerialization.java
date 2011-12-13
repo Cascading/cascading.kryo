@@ -1,5 +1,6 @@
 package cascading.kryo;
 
+import cascading.tuple.Comparison;
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -13,7 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
-public class KryoSerialization extends Configured implements Serialization {
+public class KryoSerialization extends Configured implements Serialization<Object>, Comparison<Comparable> {
     public static final Logger LOG = Logger.getLogger(KryoSerialization.class);
 
     List<List<String>> registrations;
@@ -64,7 +65,7 @@ public class KryoSerialization extends Configured implements Serialization {
      * @param aClass
      * @return
      */
-    public boolean accept(Class aClass) {
+    public boolean accept(Class<?> aClass) {
         if (kryo == null) {
             JobConf conf = (JobConf) getConf();
             KryoFactory factory = new KryoFactory();
@@ -80,15 +81,15 @@ public class KryoSerialization extends Configured implements Serialization {
         }
     }
 
-    public Serializer getSerializer(Class aClass) {
+    public Serializer<Object> getSerializer(Class aClass) {
         return new KryoSerializer(populatedKryo());
     }
 
-    public Deserializer getDeserializer(Class aClass) {
+    public Deserializer<Object> getDeserializer(Class aClass) {
         return new KryoDeserializer(populatedKryo());
     }
 
-    public Comparator getComparator(Class type) {
+    public Comparator<Comparable> getComparator(Class type) {
         return new KryoComparator();
     }
 }

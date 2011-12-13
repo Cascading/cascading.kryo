@@ -7,11 +7,12 @@ import cascading.tuple.hadoop.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.Comparator;
+
 import org.apache.hadoop.io.WritableComparator;
 import org.apache.hadoop.io.WritableUtils;
 
 /** User: sritchie Date: 12/11/11 Time: 5:03 PM */
-public class KryoComparator implements StreamComparator<BufferedInputStream>, Comparator, Serializable {
+public class KryoComparator implements StreamComparator<BufferedInputStream>, Comparator<Comparable>, Serializable {
 
     public int compare(BufferedInputStream lhsStream, BufferedInputStream rhsStream) {
         try {
@@ -36,12 +37,14 @@ public class KryoComparator implements StreamComparator<BufferedInputStream>, Co
         }
     }
 
-    public int compare(Object o1, Object o2) {
-        if (o1 instanceof Comparable && o2 instanceof Comparable) {
-            return ((Comparable) o1).compareTo(o2);
-        } else {
-            throw new RuntimeException("Can't compare " + o1 + " with " + o2 + ".");
+    public int compare(Comparable o1, Comparable o2) {
+        if(o1 == o2)
+            return 0;
+        if(o1 != null) {
+            if(o2 == null)
+                return 1;
+            return o1.compareTo(o2);
         }
-
+        return -1;
     }
 }
