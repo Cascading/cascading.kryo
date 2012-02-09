@@ -1,6 +1,5 @@
 package cascading.kryo;
 
-import cascading.tuple.Comparison;
 import com.esotericsoftware.kryo.Kryo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
@@ -10,11 +9,10 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
-import java.util.Comparator;
 import java.util.List;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
-public class KryoSerialization extends Configured implements Serialization<Object>, Comparison<Comparable> {
+public class KryoSerialization extends Configured implements Serialization<Object> {
     public static final Logger LOG = Logger.getLogger(KryoSerialization.class);
 
     List<List<String>> registrations;
@@ -59,7 +57,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     /**
-     * If Initializes Kryo instance from the JobConf on the first run. If the ACCEPT_ALL key in
+     * Initializes Kryo instance from the JobConf on the first run. If the ACCEPT_ALL key in
      * the JobConf has been set to true, Kryo will return yes for everything; else, Kryo will only
      * return true for classes with explicitly registered serializations.
      * @param aClass
@@ -87,9 +85,5 @@ public class KryoSerialization extends Configured implements Serialization<Objec
 
     public Deserializer<Object> getDeserializer(Class aClass) {
         return new KryoDeserializer(populatedKryo());
-    }
-
-    public Comparator<Comparable> getComparator(Class type) {
-        return new KryoComparator();
     }
 }
