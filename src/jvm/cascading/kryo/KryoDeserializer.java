@@ -13,9 +13,11 @@ public class KryoDeserializer implements Deserializer<Object> {
 
     private DataInputStream inputStream;
     ObjectBuffer kryoBuf;
+    Class klass;
 
-    public KryoDeserializer(Kryo k) {
+    public KryoDeserializer(Kryo k, Class klass) {
         this.kryoBuf =  KryoFactory.newBuffer(k);
+        this.klass = klass;
     }
 
     public void open(InputStream in) throws IOException {
@@ -30,7 +32,7 @@ public class KryoDeserializer implements Deserializer<Object> {
         byte[] bytes = new byte[len];
         inputStream.readFully( bytes );
 
-        return kryoBuf.readClassAndObject(bytes);
+        return kryoBuf.readObject(bytes, klass);
     }
 
     public void close() throws IOException {

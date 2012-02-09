@@ -84,6 +84,6 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     public Deserializer<Object> getDeserializer(Class aClass) {
-        return new KryoDeserializer(populatedKryo());
+        return new KryoDeserializer(populatedKryo(), aClass);
     }
 }
