@@ -26,7 +26,8 @@ public class KryoSerializer implements Serializer<Object> {
     }
 
     public void serialize(Object o) throws IOException {
-        byte[] bytes = kryoBuf.writeClassAndObject(o);
+        // We don't need to write the class because Hadoop provides this
+        byte[] bytes = kryoBuf.writeObject(o);
         outputStream.writeInt(bytes.length);
         outputStream.write(bytes);
     }
