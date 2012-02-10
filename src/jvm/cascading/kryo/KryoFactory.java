@@ -268,8 +268,8 @@ public class KryoFactory {
 
     public void populateKryo(Kryo k) {
         k.setRegistrationOptional(getAcceptAll());
-        registerBasic(k, getSerializations(), getSkipMissing());
         registerHierarchies(k, getHierarchyRegistrations(), getSkipMissing());
+        registerBasic(k, getSerializations(), getSkipMissing());
     }
 
 }

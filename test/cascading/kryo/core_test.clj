@@ -49,8 +49,8 @@
   (truthy-doto (KryoFactory. conf)
                (.setAcceptAll accept-all)
                (.setSkipMissing skip-missing)
-               (.setSerializations serializations)
-               (.setHierarchyRegistrations hierarchies)))
+               (.setHierarchyRegistrations hierarchies)
+               (.setSerializations serializations)))
 
 (tabular
  (fact "Anything other than a sequence of Lists with one or two
@@ -90,32 +90,20 @@
 (defn klass [class-name]
   (Class/forName class-name))
 
-(defn generates-pairs [factory expected]
-  (let [kryo (Kryo.)
-        matches-pairs? (just expected)
-        resolve-pairs  (fn [pairs]
-                         (->> (for [name pairs
-                                    :let [reg (.getRegisteredClass
-                                               kryo
-                                               (klass name))]]
-                                [(.getType reg)
-                                 (class (.getSerializer reg))])
-                              (into {})))]
-    (.populateKryo factory kryo)
-    (chatty-checker
-     [class-names]
-     (matches-pairs? (resolve-pairs class-names)))))
+(defn round-trip [reg-map]
+  (let [kryo     (Kryo.)
+        klasses  (keys reg-map)
+        factory (doto (factory :serializations (map vector klasses)
+                               :hierarchies    (into [] reg-map))
+                  (.populateKryo kryo))]    
+    (into {} (for [klass-name klasses
+                   :let [reg  (.getRegisteredClass kryo (klass klass-name))
+                         type        (.getType reg)
+                         ser  (class (.getSerializer reg))]]
+               [(.getName type) (.getName ser)]))))
 
-(tabular
- (fact "Fill in docstring."
-   (let [factory (factory :serializations (map vector ?class-names)
-                          :accept-all false
-                          :skip-missing false)]
-     ?class-names => (generates-pairs factory ?serializers)))
- ?class-names ?serializers
- ["java.util.HashMap" "java.util.HashSet"]
- {java.util.HashMap
-  com.esotericsoftware.kryo.serialize.MapSerializer
-  
-  java.util.HashSet
-  com.esotericsoftware.kryo.serialize.CollectionSerializer})
+(let [hierarchies {"java.util.HashMap"
+                   "com.esotericsoftware.kryo.serialize.ByteSerializer"
+                   "java.util.HashSet"
+                   "com.esotericsoftware.kryo.serialize.ClassSerializer"}]
+  (fact (round-trip hierarchies) => hierarchies))
