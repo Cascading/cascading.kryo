@@ -1,6 +1,5 @@
 package cascading.kryo;
 
-import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.ObjectBuffer;
 import com.esotericsoftware.kryo.Serializer;
 import org.apache.hadoop.mapred.JobConf;
@@ -13,6 +12,13 @@ import java.util.List;
 
 /** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
+
+    final JobConf conf;
+
+    public KryoFactory(JobConf conf) {
+        this.conf = conf;
+    }
+    
     public static final Logger LOG = Logger.getLogger(KryoFactory.class);
 
     /**
@@ -49,13 +55,30 @@ public class KryoFactory {
      */
     public static final String ACCEPT_ALL = "cascading.kryo.accept.all";
 
-    /**
-     * Encodes the supplied registrations list as a comma-separated list of alternating keys
-     * and values and stores this in the JobConf under the SERIALIZATION_PAIRS key.
-     * @param conf: Hadoop JobConf.
-     * @param registrations: List of List of [className, kryoSerializerClassName || null]
-     */
-    public void setSerializations(JobConf conf, List<List<String>> registrations) {
+    public static final String HIERARCHY_SERIALIZATIONS = "cascading.kryo.hierarchy.serializations";
+
+    public List<List<String>> buildPairs(String base) {
+        List<List<String>> builder = new ArrayList<List<String>>();
+
+        if (base == null) return builder;
+
+        // Build up a List of class, serializerClass string pairs.
+        for (String s: base.split(":")) {
+            String[] pair = s.split(",");
+            if (pair.length == 2)
+                builder.add(Arrays.asList(pair[0], pair[1]));
+            else
+                builder.add(Arrays.asList(pair[0]));
+        }
+        return builder;
+    }
+
+    public List<List<String>> getSerializations() {
+        String serializationString = conf.get(KRYO_SERIALIZATIONS);
+        return buildPairs(serializationString);
+    }
+
+    public KryoFactory setSerializations(List<List<String>> registrations) {
         StringBuilder builder = new StringBuilder();
 
         for (Iterator<List<String>> pairIter = registrations.iterator(); pairIter.hasNext(); ) {
@@ -77,45 +100,35 @@ public class KryoFactory {
         }
 
         conf.set(KRYO_SERIALIZATIONS, builder.toString());
+        return this;
     }
 
-    /**
-     * Retrieves all Kryo serializations from the JobConf as a HashMap.
-     * @param conf: Hadoop jobConf
-     * @return HashMap of [klassName, kryoSerializationClassName] pairs
-     */
-    public List<List<String>> getSerializations(JobConf conf) {
-        String serializationString = conf.get(KRYO_SERIALIZATIONS);
-        List<List<String>> builder = new ArrayList<List<String>>();
-
-        if (serializationString == null) return builder;
-
-        // Build up a List of class, serializerClass string pairs.
-        String key = null;
-        for (String s: serializationString.split(":")) {
-            String[] pair = s.split(",");
-            if (pair.length == 2)
-                builder.add(Arrays.asList(pair[0], pair[1]));
-            else
-                builder.add(Arrays.asList(pair[0]));
-        }
-        return builder;
+    public List<List<String>> getHierarchyRegistrations() {
+        String hierarchies = conf.get(HIERARCHY_SERIALIZATIONS);
+        return buildPairs(hierarchies);
     }
 
-    public void setSkipMissing(JobConf conf, boolean optional) {
-        conf.setBoolean(SKIP_MISSING, optional);
+    public KryoFactory setHierarchyRegistrations(String serializations) {
+        conf.set(HIERARCHY_SERIALIZATIONS, serializations);
+        return this;
     }
 
-    public boolean getSkipMissing(JobConf conf) {
+    public boolean getSkipMissing() {
         return conf.getBoolean(SKIP_MISSING, false);
     }
 
-    public void setAcceptAll(JobConf conf, boolean acceptAll) {
-        conf.setBoolean(ACCEPT_ALL, acceptAll);
+    public KryoFactory setSkipMissing(boolean optional) {
+        conf.setBoolean(SKIP_MISSING, optional);
+        return this;
     }
 
-    public boolean getAcceptAll(JobConf conf) {
+    public boolean getAcceptAll() {
         return conf.getBoolean(ACCEPT_ALL, true);
+    }
+
+    public KryoFactory setAcceptAll(boolean acceptAll) {
+        conf.setBoolean(ACCEPT_ALL, acceptAll);
+        return this;
     }
 
     public static ObjectBuffer newBuffer(Kryo k) {
@@ -130,10 +143,7 @@ public class KryoFactory {
         return new ObjectBuffer(k, initCapacity, finalCapacity);
     }
 
-    public static void populateKryo(Kryo k, List<List<String>> registrations,
-        boolean skipMissing, boolean acceptAll) {
-        k.setRegistrationOptional(acceptAll);
-
+    private void registerBasic(Kryo k, List<List<String>> registrations, boolean skipMissing) {
         for (List<String> registrationPair: registrations) {
             String className;
             String serializerClassName = null;
@@ -160,7 +170,7 @@ public class KryoFactory {
                     k.register(klass);
                 } else {
                     Serializer serializer = (Serializer) serializerClass.newInstance();
-                    
+
                     if (serializer instanceof SerializationFactory) {
                         serializer = ((SerializationFactory) serializer).makeSerializer(k);
                     }
@@ -180,6 +190,68 @@ public class KryoFactory {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static Serializer resolveSerializerInstance(com.esotericsoftware.kryo.Kryo k,
+        Class superClass, Class<? extends Serializer> serializerClass) {
+        try {
+            try {
+                return serializerClass.getConstructor(com.esotericsoftware.kryo.Kryo.class,
+                    Class.class).newInstance(k, superClass);
+            } catch (NoSuchMethodException ex1) {
+                try {
+                    return serializerClass.getConstructor(com.esotericsoftware.kryo.Kryo.class).newInstance(k);
+                } catch (NoSuchMethodException ex2) {
+                    try {
+                        return serializerClass.getConstructor(Class.class).newInstance(k, superClass);
+                    } catch (NoSuchMethodException ex3) {
+                        return serializerClass.newInstance();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("Unable to create serializer \""
+                                               + serializerClass.getName()
+                                               + "\" for class: "
+                                               + superClass.getName(), ex);
+        }
+    }
+
+    private void registerHierarchies(Kryo k, List<List<String>> registrations, boolean skipMissing) {
+        for (List<String> registrationPair: registrations) {
+            String className;
+            String serializerClassName;
+
+            if (registrationPair.size() == 2) {
+                className = registrationPair.get(0);
+                serializerClassName = registrationPair.get(1);
+            } else {
+                throw new RuntimeException("Only two entries allowed in the Hierarchy list.");
+            }
+
+            try {
+                Class klass = Class.forName(className);
+                Class serializerClass = Class.forName(serializerClassName);
+
+                @SuppressWarnings("unchecked")
+                Serializer serializer = resolveSerializerInstance(k, klass, serializerClass);
+                k.registerHierarchy(klass, serializer);
+
+            } catch (ClassNotFoundException e) {
+                if (skipMissing) {
+                    LOG.info("Could not find serialization or class for " + serializerClassName
+                             + ". Skipping registration.");
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+    }
+
+    public void populateKryo(Kryo k) {
+        k.setRegistrationOptional(getAcceptAll());
+        registerBasic(k, getSerializations(), getSkipMissing());
+        registerHierarchies(k, getHierarchyRegistrations(), getSkipMissing());
     }
 
 }

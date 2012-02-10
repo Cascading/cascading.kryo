@@ -1,6 +1,5 @@
 package cascading.kryo;
 
-import com.esotericsoftware.kryo.Kryo;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.serializer.Deserializer;
@@ -9,15 +8,12 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.log4j.Logger;
 
-import java.util.List;
-
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization<Object> {
     public static final Logger LOG = Logger.getLogger(KryoSerialization.class);
 
-    List<List<String>> registrations;
-    boolean skipMissing, acceptAll;
     Kryo kryo;
+    KryoFactory factory;
 
     public KryoSerialization() {
     }
@@ -32,21 +28,12 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     /**
-     * Instantiating Kryo in a separate method makes it easy for subclasses to pre-populate
-     * the base kryo instance. Cascalog uses this to register serializers for all clojure data
-     * structures.
-     * @return Base kryo instance for later customization.
+     * Entry point into Cascading.Kryo customization. Subclass this to bootstrap the serialization's
+     * Kryo instance with anything your heart desires.
+     * @param k
+     * @return
      */
-    public Kryo makeKryo() {
-        return new Kryo();
-    }
-
-    /**
-     * @return New Kryo instance populated from JobConf settings.
-     */
-    public Kryo populatedKryo() {
-        Kryo k = makeKryo();
-        KryoFactory.populateKryo(k, registrations, skipMissing, acceptAll);
+    public Kryo decorateKryo(Kryo k) {
         return k;
     }
 
@@ -54,6 +41,14 @@ public class KryoSerialization extends Configured implements Serialization<Objec
         if( super.getConf() == null )
             setConf( new JobConf() );
         return super.getConf();
+    }
+
+
+    public final Kryo populatedKryo() {
+        Kryo k = new Kryo();
+        decorateKryo(k);
+        factory.populateKryo(k);
+        return k;
     }
 
     /**
@@ -64,18 +59,14 @@ public class KryoSerialization extends Configured implements Serialization<Objec
      * @return
      */
     public boolean accept(Class<?> aClass) {
-        if (kryo == null) {
-            JobConf conf = (JobConf) getConf();
-            KryoFactory factory = new KryoFactory();
-            registrations = factory.getSerializations(conf);
-            skipMissing = factory.getSkipMissing(conf);
-            acceptAll = factory.getAcceptAll(conf);
+        if (factory == null) {
+            factory = new KryoFactory((JobConf) getConf());
             kryo = populatedKryo();
         }
         try {
             return (kryo.getRegisteredClass(aClass) != null);
         } catch (IllegalArgumentException e) {
-            return acceptAll;
+            return factory.getAcceptAll();
         }
     }
 
