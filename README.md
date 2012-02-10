@@ -4,7 +4,7 @@ Cascading.Kryo provides a drop-in [Kryo](http://code.google.com/p/kryo/) seriali
 
 ## Usage
 
-Cascading.Kryo is hosted on www.clojars.org www.conjars.org. See http://conjars.org/cascading.kryo for instructions on how to include Cascading.Kryo in your project.
+Cascading.Kryo is hosted on www.clojars.org and www.conjars.org. See http://conjars.org/cascading.kryo for instructions on how to include Cascading.Kryo in your project.
 
 Once that's done, activate the serialization by adding the following entry to `"io.serializations` in your `JobConf`:
 
