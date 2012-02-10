@@ -45,6 +45,8 @@ public class KryoSerialization extends Configured implements Serialization<Objec
 
 
     public final Kryo populatedKryo() {
+        if (factory == null)
+            factory = new KryoFactory((JobConf) getConf());
         Kryo k = new Kryo();
         decorateKryo(k);
         factory.populateKryo(k);
@@ -59,10 +61,8 @@ public class KryoSerialization extends Configured implements Serialization<Objec
      * @return
      */
     public boolean accept(Class<?> aClass) {
-        if (factory == null) {
-            factory = new KryoFactory((JobConf) getConf());
+        if (kryo == null)
             kryo = populatedKryo();
-        }
         try {
             return (kryo.getRegisteredClass(aClass) != null);
         } catch (IllegalArgumentException e) {

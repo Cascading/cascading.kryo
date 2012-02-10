@@ -108,8 +108,26 @@ public class KryoFactory {
         return buildPairs(hierarchies);
     }
 
-    public KryoFactory setHierarchyRegistrations(String serializations) {
-        conf.set(HIERARCHY_SERIALIZATIONS, serializations);
+    public KryoFactory setHierarchyRegistrations(List<List<String>> registrations) {
+        StringBuilder builder = new StringBuilder();
+
+        for (Iterator<List<String>> pairIter = registrations.iterator(); pairIter.hasNext(); ) {
+            List<String> registrationPair = pairIter.next();
+
+            if (registrationPair.size() != 2) {
+                throw new RuntimeException(registrationPair + " must contain 2 entries.");
+            }
+
+            for (Iterator<String> it = registrationPair.iterator(); it.hasNext(); ) {
+                builder.append(it.next());
+                if (it.hasNext()) {
+                    builder.append(",");
+                }
+            }
+            if (pairIter.hasNext())
+                builder.append(":");
+        }
+        conf.set(HIERARCHY_SERIALIZATIONS, builder.toString());
         return this;
     }
 
