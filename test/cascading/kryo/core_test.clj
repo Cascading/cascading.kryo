@@ -93,9 +93,9 @@
 (defn round-trip [reg-map]
   (let [kryo     (Kryo.)
         klasses  (keys reg-map)
-        factory (doto (factory :serializations (map vector klasses)
-                               :hierarchies    (into [] reg-map))
-                  (.populateKryo kryo))]    
+        factory  (doto (factory :serializations (map vector klasses)
+                                :hierarchies    (into [] reg-map))
+                   (.populateKryo kryo))]    
     (into {} (for [klass-name klasses
                    :let [reg  (.getRegisteredClass kryo (klass klass-name))
                          type        (.getType reg)

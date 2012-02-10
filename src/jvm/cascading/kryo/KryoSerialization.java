@@ -46,7 +46,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
 
     public final Kryo populatedKryo() {
         if (factory == null)
-            factory = new KryoFactory((JobConf) getConf());
+            factory = new KryoFactory(getConf());
         Kryo k = new Kryo();
         decorateKryo(k);
         factory.populateKryo(k);

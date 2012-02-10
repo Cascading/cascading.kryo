@@ -2,7 +2,7 @@ package cascading.kryo;
 
 import com.esotericsoftware.kryo.ObjectBuffer;
 import com.esotericsoftware.kryo.Serializer;
-import org.apache.hadoop.mapred.JobConf;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -13,9 +13,9 @@ import java.util.List;
 /** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
 
-    final JobConf conf;
+    final Configuration conf;
 
-    public KryoFactory(JobConf conf) {
+    public KryoFactory(Configuration conf) {
         this.conf = conf;
     }
     
