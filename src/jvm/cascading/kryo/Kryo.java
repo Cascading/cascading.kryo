@@ -11,7 +11,7 @@ public class Kryo extends KryoReflectionFactorySupport {
 
     List<HierarchyPair> hierarchyPairs = new ArrayList<HierarchyPair>();
 
-    public class HierarchyPair {
+    private static class HierarchyPair {
         final Class superClass;
         final Serializer serializer;
         

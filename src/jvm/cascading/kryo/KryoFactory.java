@@ -6,23 +6,19 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 /** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
-
+    final Logger LOG = Logger.getLogger(KryoFactory.class);
     final Configuration conf;
 
     public KryoFactory(Configuration conf) {
         this.conf = conf;
     }
-    
-    public static final Logger LOG = Logger.getLogger(KryoFactory.class);
 
     /**
-     * Initial capacity of the Kryo object buffer, used for deserializing tuple entries.
+     * Initial capacity of the Kryo object buffer.
      */
     private static final int INIT_CAPACITY = 2000;
 
@@ -32,19 +28,31 @@ public class KryoFactory {
     private static final int FINAL_CAPACITY = 2000000000;
 
     /**
-     * KRYO_SERIALIZATIONS holds a colon-separated list of classes to register with Kryo.
-     * For example:
+     * KRYO_REGISTRATIONS holds a colon-separated list of classes to register with Kryo.
+     * For example, the following value:
      *
      * "someClass,someSerializer:otherClass:thirdClass,thirdSerializer"
      *
-     * would register someClass and thirdClass with custom serializers and otherClass with
-     * Kryo's FieldSerializer. The FieldSerializer requires the class to
-     * implement a default constructor.
+     * will direct KryoFactory to register someClass and thirdClass with custom serializers
+     * and otherClass with Kryo's FieldsSerializer.
      */
-    public static final String KRYO_SERIALIZATIONS = "cascading.kryo.serializations";
+    public static final String KRYO_REGISTRATIONS = "cascading.kryo.registrations";
 
     /**
-     * If SKIP_MISSING is set to true, Kryo won't throw an error when Cascading tries to register
+     * HIERARCHY_REGISTRATIONS holds a colon-separated list of classes or interfaces to register
+     * with Kryo. Hierarchy Registrations are searched after basic registrations, and have the ability
+     * to capture objects that are assignable from the hierarchy's superclass.
+     * For example, the following value:
+     *
+     * "someClass,someSerializer:someInterface,otherSerializer"
+     *
+     * will configure cascading.kryo to serializeobjects that extend from someClass with someSerializer,
+     * and objects that extend someInterface with otherSerializer.
+     */
+    public static final String HIERARCHY_REGISTRATIONS = "cascading.kryo.hierarchy.registrations";
+
+    /**
+     * If SKIP_MISSING is set to false, Kryo will throw an error when Cascading tries to register
      * a class or serialization that doesn't exist.
      */
     public static final String SKIP_MISSING = "cascading.kryo.skip.missing";
@@ -55,99 +63,7 @@ public class KryoFactory {
      */
     public static final String ACCEPT_ALL = "cascading.kryo.accept.all";
 
-    public static final String HIERARCHY_SERIALIZATIONS = "cascading.kryo.hierarchy.serializations";
-
-    public List<List<String>> buildPairs(String base) {
-        List<List<String>> builder = new ArrayList<List<String>>();
-
-        if (base == null) return builder;
-
-        // Build up a List of class, serializerClass string pairs.
-        for (String s: base.split(":")) {
-            String[] pair = s.split(",");
-            if (pair.length == 2)
-                builder.add(Arrays.asList(pair[0], pair[1]));
-            else
-                builder.add(Arrays.asList(pair[0]));
-        }
-        return builder;
-    }
-
-    public List<List<String>> getSerializations() {
-        String serializationString = conf.get(KRYO_SERIALIZATIONS);
-        return buildPairs(serializationString);
-    }
-
-    public KryoFactory setSerializations(List<List<String>> registrations) {
-        StringBuilder builder = new StringBuilder();
-
-        for (Iterator<List<String>> pairIter = registrations.iterator(); pairIter.hasNext(); ) {
-            List<String> registrationPair = pairIter.next();
-
-            int size = registrationPair.size();
-            if (size < 1 || size > 2) {
-                throw new RuntimeException(registrationPair + " must contain either 1 or 2 entries.");
-            }
-
-            for (Iterator<String> it = registrationPair.iterator(); it.hasNext(); ) {
-                builder.append(it.next());
-                if (it.hasNext()) {
-                    builder.append(",");
-                }
-            }
-            if (pairIter.hasNext())
-                builder.append(":");
-        }
-
-        conf.set(KRYO_SERIALIZATIONS, builder.toString());
-        return this;
-    }
-
-    public List<List<String>> getHierarchyRegistrations() {
-        String hierarchies = conf.get(HIERARCHY_SERIALIZATIONS);
-        return buildPairs(hierarchies);
-    }
-
-    public KryoFactory setHierarchyRegistrations(List<List<String>> registrations) {
-        StringBuilder builder = new StringBuilder();
-
-        for (Iterator<List<String>> pairIter = registrations.iterator(); pairIter.hasNext(); ) {
-            List<String> registrationPair = pairIter.next();
-
-            if (registrationPair.size() != 2) {
-                throw new RuntimeException(registrationPair + " must contain 2 entries.");
-            }
-
-            for (Iterator<String> it = registrationPair.iterator(); it.hasNext(); ) {
-                builder.append(it.next());
-                if (it.hasNext()) {
-                    builder.append(",");
-                }
-            }
-            if (pairIter.hasNext())
-                builder.append(":");
-        }
-        conf.set(HIERARCHY_SERIALIZATIONS, builder.toString());
-        return this;
-    }
-
-    public boolean getSkipMissing() {
-        return conf.getBoolean(SKIP_MISSING, false);
-    }
-
-    public KryoFactory setSkipMissing(boolean optional) {
-        conf.setBoolean(SKIP_MISSING, optional);
-        return this;
-    }
-
-    public boolean getAcceptAll() {
-        return conf.getBoolean(ACCEPT_ALL, true);
-    }
-
-    public KryoFactory setAcceptAll(boolean acceptAll) {
-        conf.setBoolean(ACCEPT_ALL, acceptAll);
-        return this;
-    }
+    // ObjectBuffer creation
 
     public static ObjectBuffer newBuffer(Kryo k) {
         return newBuffer(k, INIT_CAPACITY);
@@ -159,55 +75,6 @@ public class KryoFactory {
 
     public static ObjectBuffer newBuffer(Kryo k, int initCapacity, int finalCapacity) {
         return new ObjectBuffer(k, initCapacity, finalCapacity);
-    }
-
-    private void registerBasic(Kryo k, List<List<String>> registrations, boolean skipMissing) {
-        for (List<String> registrationPair: registrations) {
-            String className;
-            String serializerClassName = null;
-
-            int size = registrationPair.size();
-            if (size == 1)
-                className = registrationPair.get(0);
-            else if (size == 2) {
-                className = registrationPair.get(0);
-                serializerClassName = registrationPair.get(1);
-            } else {
-                throw new RuntimeException("Too many entries in the Kryo registrations map!");
-            }
-
-            try {
-                Class klass = Class.forName(className);
-                Class serializerClass = null;
-
-                if (serializerClassName != null) {
-                    serializerClass = Class.forName(serializerClassName);
-                }
-
-                if (serializerClass == null) {
-                    k.register(klass);
-                } else {
-                    Serializer serializer = (Serializer) serializerClass.newInstance();
-
-                    if (serializer instanceof SerializationFactory) {
-                        serializer = ((SerializationFactory) serializer).makeSerializer(k);
-                    }
-                    k.register(klass, serializer);
-                }
-
-            } catch (ClassNotFoundException e) {
-                if (skipMissing) {
-                    LOG.info("Could not find serialization or class for " + serializerClassName
-                             + ". Skipping registration.");
-                } else {
-                    throw new RuntimeException(e);
-                }
-            } catch (InstantiationException e) {
-                throw new RuntimeException(e);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 
     private static Serializer resolveSerializerInstance(com.esotericsoftware.kryo.Kryo k,
@@ -235,41 +102,149 @@ public class KryoFactory {
         }
     }
 
-    private void registerHierarchies(Kryo k, List<List<String>> registrations, boolean skipMissing) {
-        for (List<String> registrationPair: registrations) {
-            String className;
-            String serializerClassName;
+    private void registerHierarchies(Kryo k, Iterable<ClassPair> registrations) {
+        for (ClassPair pair: registrations) {
+            Class klass = pair.getSuperClass();
+            Class<? extends Serializer> serializerClass = pair.getSerializerClass();
 
-            if (registrationPair.size() == 2) {
-                className = registrationPair.get(0);
-                serializerClassName = registrationPair.get(1);
+            if(serializerClass == null)
+                throw new RuntimeException("Serializations are required for Heirarchy registration.");
+
+            k.registerHierarchy(klass, resolveSerializerInstance(k, klass, serializerClass));
+        }
+    }
+
+    private void registerBasic(Kryo k, Iterable<ClassPair> registrations) {
+        for (ClassPair pair: registrations) {
+            Class klass = pair.getSuperClass();
+            Class<? extends Serializer> serializerClass = pair.getSerializerClass();
+
+            if (serializerClass == null) {
+                k.register(klass);
             } else {
-                throw new RuntimeException("Only two entries allowed in the Hierarchy list.");
-            }
-
-            try {
-                Class klass = Class.forName(className);
-                Class serializerClass = Class.forName(serializerClassName);
-
-                @SuppressWarnings("unchecked")
-                Serializer serializer = resolveSerializerInstance(k, klass, serializerClass);
-                k.registerHierarchy(klass, serializer);
-
-            } catch (ClassNotFoundException e) {
-                if (skipMissing) {
-                    LOG.info("Could not find serialization or class for " + serializerClassName
-                             + ". Skipping registration.");
-                } else {
-                    throw new RuntimeException(e);
-                }
+                k.register(klass, resolveSerializerInstance(k, klass, serializerClass));
             }
         }
     }
 
     public void populateKryo(Kryo k) {
         k.setRegistrationOptional(getAcceptAll());
-        registerHierarchies(k, getHierarchyRegistrations(), getSkipMissing());
-        registerBasic(k, getSerializations(), getSkipMissing());
+        registerHierarchies(k, getHierarchyRegistrations());
+        registerBasic(k, getRegistrations());
     }
 
+    public static class ClassPair {
+        final Class superClass;
+        final Class<? extends Serializer> serializerClass;
+
+        public ClassPair(Class superClass) {
+            this(superClass, null);
+        }
+
+        public ClassPair(Class superClass, Class<? extends Serializer> serializerClass) {
+            this.superClass = superClass;
+            this.serializerClass = serializerClass;
+        }
+
+        public Class getSuperClass() {
+            return superClass;
+        }
+
+        public Class<? extends Serializer> getSerializerClass() {
+            return serializerClass;
+        }
+
+        @Override public String toString() {
+            String ret = superClass.getName();
+            if(serializerClass != null)
+                ret = ret + "," + serializerClass.getName();
+            return ret;
+        }
+    }
+
+    public String classPairString(Iterable<ClassPair> pairs) {
+        StringBuilder builder = new StringBuilder();
+        boolean isFirst = true;
+        for (ClassPair pair: pairs) {
+            if (!isFirst) {
+                builder.append(":");
+            }
+            isFirst = false;
+            builder.append(pair.toString());
+        }
+        return builder.toString();
+    }
+
+    public Iterable<ClassPair> buildPairs(String base) {
+        List<ClassPair> builder = new ArrayList<ClassPair>();
+
+        if (base == null)
+            return builder;
+
+        for (String s: base.split(":")) {
+            String[] pair = s.split(",");
+            try {
+                switch (pair.length) {
+                    case 1:
+                        builder.add(new ClassPair(Class.forName(pair[0])));
+                        break;
+                    case 2:
+                        @SuppressWarnings("unchecked")
+                        Class<? extends Serializer> serializerClass = (Class<? extends Serializer>) Class.forName(pair[1]);
+                        builder.add(new ClassPair(Class.forName(pair[0]), serializerClass));
+                        break;
+                    default:
+                        throw new RuntimeException(base + " is not well-formed.");
+                }
+            } catch (ClassNotFoundException e) {
+                if (getSkipMissing()) {
+                    LOG.info("Could not find serialization or class for " + pair[1]
+                             + ". Skipping registration.");
+                } else {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return builder;
+    }
+
+    // Configuration Options
+
+    public boolean getSkipMissing() {
+        return conf.getBoolean(SKIP_MISSING, false);
+    }
+
+    public KryoFactory setSkipMissing(boolean optional) {
+        conf.setBoolean(SKIP_MISSING, optional);
+        return this;
+    }
+
+    public boolean getAcceptAll() {
+        return conf.getBoolean(ACCEPT_ALL, true);
+    }
+
+    public KryoFactory setAcceptAll(boolean acceptAll) {
+        conf.setBoolean(ACCEPT_ALL, acceptAll);
+        return this;
+    }
+
+    public Iterable<ClassPair> getRegistrations() {
+        String serializations = conf.get(KRYO_REGISTRATIONS);
+        return buildPairs(serializations);
+    }
+
+    public KryoFactory setRegistrations(Iterable<ClassPair> registrations) {
+        conf.set(KRYO_REGISTRATIONS, classPairString(registrations));
+        return this;
+    }
+
+    public Iterable<ClassPair> getHierarchyRegistrations() {
+        String hierarchies = conf.get(HIERARCHY_REGISTRATIONS);
+        return buildPairs(hierarchies);
+    }
+
+    public KryoFactory setHierarchyRegistrations(Iterable<ClassPair> registrations) {
+        conf.set(HIERARCHY_REGISTRATIONS, classPairString(registrations));
+        return this;
+    }
 }

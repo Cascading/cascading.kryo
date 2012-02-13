@@ -6,12 +6,9 @@ import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
 import org.apache.hadoop.mapred.JobConf;
-import org.apache.log4j.Logger;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization<Object> {
-    public static final Logger LOG = Logger.getLogger(KryoSerialization.class);
-
     Kryo kryo;
     KryoFactory factory;
 
@@ -28,8 +25,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     /**
-     * Entry point into Cascading.Kryo customization. Subclass this to bootstrap the serialization's
-     * Kryo instance with anything your heart desires.
+     *
      * @param k
      * @return
      */

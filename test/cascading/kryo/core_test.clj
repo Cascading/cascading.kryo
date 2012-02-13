@@ -1,8 +1,20 @@
 (ns cascading.kryo.core-test
   (:use midje.sweet)
   (:import [org.apache.hadoop.mapred JobConf]
-           [cascading.kryo Kryo KryoFactory KryoSerialization]
-           [java.io ByteArrayOutputStream ByteArrayInputStream]))
+           [cascading.kryo Kryo KryoFactory KryoSerialization
+            KryoFactory$ClassPair]
+           [java.io ByteArrayOutputStream ByteArrayInputStream]
+           [com.esotericsoftware.kryo.serialize LongSerializer]))
+
+(defn pair
+  ([klass-a]
+     (KryoFactory$ClassPair. klass-a))
+  ([klass-a klass-b]
+     (KryoFactory$ClassPair. klass-a klass-b)))
+
+(defn to-pairs [pair-seq]
+  (when pair-seq
+    (map (partial apply pair) pair-seq)))
 
 (defn os->is
   "Returns a ByteArrayInputStream into the data inside the supplied
@@ -10,7 +22,7 @@
   [os]
   (ByteArrayInputStream. (.toByteArray os)))
 
-(defn round-trip
+(defn round-trip-obj
   "Accepts a serialization and an object, round trips the object
   through the Hadoop serialization and passes it back out. Successful
   round-tripping will act as identity."
@@ -44,48 +56,42 @@
 
 (defn factory
   [& {:keys [conf accept-all skip-missing
-             serializations hierarchies]
+             registrations hierarchies]
       :or {conf (JobConf.)}}]
   (truthy-doto (KryoFactory. conf)
                (.setAcceptAll accept-all)
                (.setSkipMissing skip-missing)
-               (.setHierarchyRegistrations hierarchies)
-               (.setSerializations serializations)))
+               (.setHierarchyRegistrations (to-pairs hierarchies))
+               (.setRegistrations (to-pairs registrations))))
 
-(tabular
- (fact "Anything other than a sequence of Lists with one or two
-  entries should throw an exception."
-   (factory :serializations ?pairs) => (throws RuntimeException))
- ?pairs
- [["class" "serial" "face"] ["k" "v"]]
- [[] ["k" "v"]])
-
-(defn get-serializations
+(defn get-registrations
   "Returns a clojure representation of the serializations registered
   by the supplied factory."
   [factory]
-  (into [] (map vec (.getSerializations factory))))
+  (map (fn [pair]
+         (let [super-klass  (.getSuperClass pair)]
+           (if-let [serial-klass (.getSerializerClass pair)]
+             [super-klass serial-klass]
+             [super-klass])))
+       (.getRegistrations factory)))
 
 (tabular
  (fact "sequences of either individual classes or class-serializer
   pairs should round trip through a KryoFactory."
-   (let [factory (factory :serializations ?pairs)]
-     (get-serializations factory) => ?pairs))
+   (let [factory (factory :registrations ?pairs)]
+     (get-registrations factory) => ?pairs))
  ?pairs
- [["class" "serial"] ["k" "v"]]
- [["k"] ["v"] ["x"]])
+ [[String LongSerializer]])
 
 (tabular
  (fact "Pairs of klass & serialization should be resolved into a
        list of lists by KryoFactory."
    (let [factory (factory
                   :conf (doto (JobConf.)
-                          (.set KryoFactory/KRYO_SERIALIZATIONS ?string)))]
-     (get-serializations factory) => ?pairs))
- ?string   ?pairs
- "k,v"     [["k" "v"]]
- "k"       [["k"]] 
- "k,v:i,j" [["k" "v"] ["i" "j"]])
+                          (.set KryoFactory/KRYO_REGISTRATIONS ?string)))]
+     (get-registrations factory) => ?pairs))
+ ?string                             ?pairs
+ "java.lang.String,java.lang.String" [[String String]])
 
 (defn klass [class-name]
   (Class/forName class-name))
@@ -93,17 +99,10 @@
 (defn round-trip [reg-map]
   (let [kryo     (Kryo.)
         klasses  (keys reg-map)
-        factory  (doto (factory :serializations (map vector klasses)
-                                :hierarchies    (into [] reg-map))
+        factory  (doto (factory :registrations (map vector klasses)
+                                :hierarchies   (into [] reg-map))
                    (.populateKryo kryo))]    
     (into {} (for [klass-name klasses
-                   :let [reg  (.getRegisteredClass kryo (klass klass-name))
-                         type        (.getType reg)
-                         ser  (class (.getSerializer reg))]]
-               [(.getName type) (.getName ser)]))))
-
-(let [hierarchies {"java.util.HashMap"
-                   "com.esotericsoftware.kryo.serialize.ByteSerializer"
-                   "java.util.HashSet"
-                   "com.esotericsoftware.kryo.serialize.ClassSerializer"}]
-  (fact (round-trip hierarchies) => hierarchies))
+                   :let [reg  (.getRegisteredClass kryo klass-name)]]
+               [(.getType reg)
+                (class (.getSerializer reg))]))))
