@@ -166,9 +166,8 @@ public class KryoFactory {
         StringBuilder builder = new StringBuilder();
         boolean isFirst = true;
         for (ClassPair pair: pairs) {
-            if (!isFirst) {
+            if (!isFirst)
                 builder.append(":");
-            }
             isFirst = false;
             builder.append(pair.toString());
         }
