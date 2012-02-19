@@ -25,8 +25,23 @@ would register `someClass` and `thirdClass` to use their respective custom seria
 `cascading.kryo.KryoFactory` provides the following helper methods:
 
 ```java
-public void setSerializations(JobConf conf, List<List<String>> registrations)
-public List<List<String>> getSerializations(JobConf conf)
+public void setRegistrations(List<ClassPair> registrations)
+public List<ClassPair> getRegistrations()
+```
+
+### cascading.kryo.hierarchy.registrations
+
+A Hierarchy registration is a pair of `<classOrInterface, serializerClass>`. Hierarchy pairs are examined in order after all explicit registrations, and catch objects that are assignable from the supplied `classOrInterface`. You can use this feature to catch all Lists, for example. Set `cascading.kryo.hierarchy.registrations` to a colon-separated string of <classOrInterface, serializerClass> pairs. For example:
+
+    "someClass,someSerializer:someInterface,otherSerializer"
+
+would register objects assignable from `someClass` and `someInterface` to be serialized by (respectively) `someSerializer` and `otherSerializer`.
+
+`cascading.kryo.KryoFactory` provides the following helper methods:
+
+```java
+public void setHierarchyRegistrations(List<ClassPair> registrations)
+public List<ClassPair> getHierarchyRegistrations()
 ```
 
 ### cascading.kryo.skip.missing
@@ -39,7 +54,7 @@ If this setting is false, and you provide a class or serializer in `cascading.kr
 
 (Defaults to true.)
 
-When `cascading.kryo.accept.all` is true, Cascading.Kryo will accept any class that comes its way in addition to explicitly-registered classes. This behavior makes Cascading.Kryo useful as a replacement for Java's loathesome default serialization. Set `cascading.kryo.accept.all` to false to have it reject un-registered classes.
+When `cascading.kryo.accept.all` is true, Cascading.Kryo will accept any class that comes its way in addition to explicitly-registered classes. This behavior makes Cascading.Kryo useful as a replacement for Java's default serialization. Set `cascading.kryo.accept.all` to false to have `KryoSerialization` reject un-registered classes.
 
 ## License
 
