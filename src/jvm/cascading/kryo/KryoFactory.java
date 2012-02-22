@@ -77,7 +77,7 @@ public class KryoFactory {
         return new ObjectBuffer(k, initCapacity, finalCapacity);
     }
 
-    private static Serializer resolveSerializerInstance(com.esotericsoftware.kryo.Kryo k,
+    public static Serializer resolveSerializerInstance(com.esotericsoftware.kryo.Kryo k,
         Class superClass, Class<? extends Serializer> serializerClass) {
         try {
             try {
@@ -102,7 +102,7 @@ public class KryoFactory {
         }
     }
 
-    private void registerHierarchies(Kryo k, Iterable<ClassPair> registrations) {
+    public void registerHierarchies(Kryo k, Iterable<ClassPair> registrations) {
         for (ClassPair pair: registrations) {
             Class klass = pair.getSuperClass();
             Class<? extends Serializer> serializerClass = pair.getSerializerClass();
@@ -114,7 +114,7 @@ public class KryoFactory {
         }
     }
 
-    private void registerBasic(Kryo k, Iterable<ClassPair> registrations) {
+    public void registerBasic(com.esotericsoftware.kryo.Kryo k, Iterable<ClassPair> registrations) {
         for (ClassPair pair: registrations) {
             Class klass = pair.getSuperClass();
             Class<? extends Serializer> serializerClass = pair.getSerializerClass();
