@@ -6,5 +6,6 @@
   :dependencies [[com.googlecode/kryo "1.04"]
                  [de.javakaffee/kryo-serializers "0.9"]]
   :dev-dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]
-                     [clojure "1.3.0"]
-                     [midje "1.3.0"]])
+                     [midje "1.3.1" :exclusions [org.clojure/clojure]]
+                     [clojure "1.2.1"]
+                     [lein-midje "1.0.8"]])

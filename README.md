@@ -1,5 +1,7 @@
 # cascading.kryo
 
+[![Build Status](https://secure.travis-ci.org/sritchie/cascading.kryo.png?branch=master)](http://travis-ci.org/sritchie/cascading.kryo)
+
 Cascading.Kryo provides a drop-in [Kryo](http://code.google.com/p/kryo/) serialization for your Cascading (or Hadoop) workflow.
 
 ## Usage
