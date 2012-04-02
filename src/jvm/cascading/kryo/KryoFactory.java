@@ -1,6 +1,5 @@
 package cascading.kryo;
 
-import com.esotericsoftware.kryo.ObjectBuffer;
 import com.esotericsoftware.kryo.Serializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
@@ -16,16 +15,6 @@ public class KryoFactory {
     public KryoFactory(Configuration conf) {
         this.conf = conf;
     }
-
-    /**
-     * Initial capacity of the Kryo object buffer.
-     */
-    private static final int INIT_CAPACITY = 2000;
-
-    /**
-     * Maximum capacity of the Kryo object buffer.
-     */
-    private static final int FINAL_CAPACITY = 2000000000;
 
     /**
      * KRYO_REGISTRATIONS holds a colon-separated list of classes to register with Kryo.
@@ -62,20 +51,6 @@ public class KryoFactory {
      * with custom serializations registered.
      */
     public static final String ACCEPT_ALL = "cascading.kryo.accept.all";
-
-    // ObjectBuffer creation
-
-    public static ObjectBuffer newBuffer(Kryo k) {
-        return newBuffer(k, INIT_CAPACITY);
-    }
-
-    public static ObjectBuffer newBuffer(Kryo k, int initCapacity) {
-        return newBuffer(k, initCapacity, FINAL_CAPACITY);
-    }
-
-    public static ObjectBuffer newBuffer(Kryo k, int initCapacity, int finalCapacity) {
-        return new ObjectBuffer(k, initCapacity, finalCapacity);
-    }
 
     public static Serializer resolveSerializerInstance(com.esotericsoftware.kryo.Kryo k,
         Class superClass, Class<? extends Serializer> serializerClass) {
@@ -128,7 +103,7 @@ public class KryoFactory {
     }
 
     public void populateKryo(Kryo k) {
-        k.setRegistrationOptional(getAcceptAll());
+        k.setRegistrationRequired(!getAcceptAll());
         registerHierarchies(k, getHierarchyRegistrations());
         registerBasic(k, getRegistrations());
     }

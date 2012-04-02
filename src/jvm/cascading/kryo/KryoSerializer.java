@@ -1,42 +1,34 @@
 package cascading.kryo;
 
-import com.esotericsoftware.kryo.ObjectBuffer;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.hadoop.io.serializer.Serializer;
 
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 /** User: sritchie Date: 12/1/11 Time: 11:57 AM */
 public class KryoSerializer implements Serializer<Object> {
+    private final Kryo kryo;
+    private Output output;
 
-    private DataOutputStream outputStream;
-    ObjectBuffer kryoBuf;
-
-    public KryoSerializer(Kryo k) {
-        this.kryoBuf =  KryoFactory.newBuffer(k);
+    public KryoSerializer(Kryo kryo) {
+        this.kryo =  kryo;
     }
 
     public void open(OutputStream out) throws IOException {
-        if( out instanceof DataOutputStream )
-            this.outputStream = (DataOutputStream) out;
-        else
-            this.outputStream = new DataOutputStream( out );
+        output = new Output(out);
     }
 
     public void serialize(Object o) throws IOException {
-        // We don't need to write the class because Hadoop provides this
-        byte[] bytes = kryoBuf.writeObject(o);
-        outputStream.writeInt(bytes.length);
-        outputStream.write(bytes);
+        kryo.writeObject(output, o);
     }
 
     public void close() throws IOException {
         try {
-            if( outputStream != null )
-                outputStream.close();
+            if( output != null )
+                output.close();
         } finally {
-            outputStream = null;
+            output = null;
         }
     }
 }

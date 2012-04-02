@@ -60,7 +60,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
         if (kryo == null)
             kryo = populatedKryo();
         try {
-            return (kryo.getRegisteredClass(aClass) != null);
+            return (kryo.getRegistration(aClass) != null);
         } catch (IllegalArgumentException e) {
             return factory.getAcceptAll();
         }
