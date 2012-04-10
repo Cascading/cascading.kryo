@@ -17,5 +17,6 @@ CHILDPY
 docs/
 .idea
 *.iws
+*.iml
 *.ipr
 twitterbin/
