@@ -5,7 +5,6 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
-import org.apache.hadoop.mapred.JobConf;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization<Object> {
@@ -13,6 +12,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     KryoFactory factory;
 
     public KryoSerialization() {
+        this(new Configuration());
     }
 
     /**
@@ -32,13 +32,6 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     public Kryo decorateKryo(Kryo k) {
         return k;
     }
-
-    @Override public Configuration getConf() {
-        if( super.getConf() == null )
-            setConf( new JobConf() );
-        return super.getConf();
-    }
-
 
     public final Kryo populatedKryo() {
         if (factory == null)

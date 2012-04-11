@@ -21,6 +21,7 @@ public class KryoSerializer implements Serializer<Object> {
 
     public void serialize(Object o) throws IOException {
         kryo.writeObject(output, o);
+        output.flush();
     }
 
     public void close() throws IOException {
