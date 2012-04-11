@@ -1,5 +1,6 @@
 package cascading.kryo;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.Serializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.log4j.Logger;
@@ -85,11 +86,11 @@ public class KryoFactory {
             if(serializerClass == null)
                 throw new RuntimeException("Serializations are required for Heirarchy registration.");
 
-            k.registerHierarchy(klass, resolveSerializerInstance(k, klass, serializerClass));
+            k.addDefaultSerializer(klass, resolveSerializerInstance(k, klass, serializerClass));
         }
     }
 
-    public void registerBasic(com.esotericsoftware.kryo.Kryo k, Iterable<ClassPair> registrations) {
+    public void registerBasic(Kryo k, Iterable<ClassPair> registrations) {
         for (ClassPair pair: registrations) {
             Class klass = pair.getSuperClass();
             Class<? extends Serializer> serializerClass = pair.getSerializerClass();

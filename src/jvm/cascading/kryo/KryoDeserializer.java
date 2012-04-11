@@ -1,5 +1,6 @@
 package cascading.kryo;
 
+import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.hadoop.io.serializer.Deserializer;
 

@@ -1,5 +1,7 @@
 package cascading.kryo;
 
+import com.esotericsoftware.kryo.Kryo;
+import de.javakaffee.kryoserializers.KryoReflectionFactorySupport;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.serializer.Deserializer;
@@ -36,7 +38,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     public final Kryo populatedKryo() {
         if (factory == null)
             factory = new KryoFactory(getConf());
-        Kryo k = new Kryo();
+        Kryo k = new KryoReflectionFactorySupport();
         decorateKryo(k);
         factory.populateKryo(k);
         return k;
