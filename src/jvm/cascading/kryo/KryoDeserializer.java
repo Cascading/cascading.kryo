@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.hadoop.io.serializer.Deserializer;
 
+import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,7 +13,9 @@ public class KryoDeserializer implements Deserializer<Object> {
 
     private final Kryo kryo;
     private final Class<Object> klass;
-    private Input input;
+
+    private DataInputStream inputStream;
+    private Input input = null;
 
     public KryoDeserializer(Kryo kryo, Class<Object> klass) {
         this.kryo =  kryo;
@@ -20,19 +23,34 @@ public class KryoDeserializer implements Deserializer<Object> {
     }
 
     public void open(InputStream in) throws IOException {
-        input = new Input(in);
+        if( in instanceof DataInputStream)
+            this.inputStream = (DataInputStream) in;
+        else
+            this.inputStream = new DataInputStream( in );
     }
 
     public Object deserialize(Object o) throws IOException {
+        int len = inputStream.readInt();
+        byte[] bytes = new byte[len];
+        inputStream.readFully( bytes );
+
+        if (input == null)
+            input = new Input(bytes);
+        else
+            input.setBuffer(bytes);
+
         return kryo.readObject(input, klass);
     }
 
     public void close() throws IOException {
+        if( input != null )
+            input.close();
+
         try {
-            if( input != null )
-                input.close();
+            if( inputStream != null )
+                inputStream.close();
         } finally {
-            input = null;
+            inputStream = null;
         }
     }
 }
