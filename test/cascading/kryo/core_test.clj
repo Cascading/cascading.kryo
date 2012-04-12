@@ -1,10 +1,9 @@
 (ns cascading.kryo.core-test
   (:use midje.sweet)
   (:import [org.apache.hadoop.mapred JobConf]
-           [cascading.kryo Kryo KryoFactory KryoSerialization
-            KryoFactory$ClassPair]
+           [cascading.kryo Kryo KryoFactory KryoSerialization KryoFactory$ClassPair]
            [java.io ByteArrayOutputStream ByteArrayInputStream]
-           [com.esotericsoftware.kryo.serialize LongSerializer]))
+           [com.esotericsoftware.kryo.serializers CompatibleFieldSerializer]))
 
 (defn pair
   ([klass-a]
@@ -81,7 +80,7 @@
    (let [factory (factory :registrations ?pairs)]
      (get-registrations factory) => ?pairs))
  ?pairs
- [[String LongSerializer]])
+ [[String CompatibleFieldSerializer]])
 
 (tabular
  (fact "Pairs of klass & serialization should be resolved into a
