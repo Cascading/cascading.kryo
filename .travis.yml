@@ -1,2 +1,6 @@
 language: clojure
-script: "lein compile, midje"
+branches:
+  only:
+    - develop
+    - master
+script: lein compile, midje
