@@ -1,8 +1,9 @@
 (ns cascading.kryo.core-test
   (:use midje.sweet)
   (:import [org.apache.hadoop.mapred JobConf]
-           [cascading.kryo Kryo KryoFactory KryoSerialization KryoFactory$ClassPair]
+           [cascading.kryo KryoFactory KryoSerialization KryoFactory$ClassPair]
            [java.io ByteArrayOutputStream ByteArrayInputStream]
+           [com.esotericsoftware.kryo Kryo]
            [com.esotericsoftware.kryo.serializers CompatibleFieldSerializer]))
 
 (defn pair
