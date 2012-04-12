@@ -1,6 +1,7 @@
 package cascading.kryo;
 
-import com.esotericsoftware.kryo.ObjectBuffer;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
 import org.apache.hadoop.io.serializer.Deserializer;
 
 import java.io.DataInputStream;
@@ -10,12 +11,14 @@ import java.io.InputStream;
 /** User: sritchie Date: 12/1/11 Time: 3:15 PM */
 public class KryoDeserializer implements Deserializer<Object> {
 
-    private DataInputStream inputStream;
-    ObjectBuffer kryoBuf;
-    Class klass;
+    private final Kryo kryo;
+    private final Class<Object> klass;
 
-    public KryoDeserializer(Kryo k, Class klass) {
-        this.kryoBuf =  KryoFactory.newBuffer(k);
+    private DataInputStream inputStream;
+    private Input input = null;
+
+    public KryoDeserializer(Kryo kryo, Class<Object> klass) {
+        this.kryo =  kryo;
         this.klass = klass;
     }
 
@@ -31,10 +34,18 @@ public class KryoDeserializer implements Deserializer<Object> {
         byte[] bytes = new byte[len];
         inputStream.readFully( bytes );
 
-        return kryoBuf.readObject(bytes, klass);
+        if (input == null)
+            input = new Input(bytes);
+        else
+            input.setBuffer(bytes);
+
+        return kryo.readObject(input, klass);
     }
 
     public void close() throws IOException {
+        if( input != null )
+            input.close();
+
         try {
             if( inputStream != null )
                 inputStream.close();
