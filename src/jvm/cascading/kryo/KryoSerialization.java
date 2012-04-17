@@ -1,12 +1,12 @@
 package cascading.kryo;
 
 import com.esotericsoftware.kryo.Kryo;
-import de.javakaffee.kryoserializers.KryoReflectionFactorySupport;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.serializer.Deserializer;
 import org.apache.hadoop.io.serializer.Serialization;
 import org.apache.hadoop.io.serializer.Serializer;
+import org.objenesis.strategy.StdInstantiatorStrategy;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization<Object> {
@@ -38,7 +38,10 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     public final Kryo populatedKryo() {
         if (factory == null)
             factory = new KryoFactory(getConf());
-        Kryo k = new KryoReflectionFactorySupport();
+
+        Kryo k = new Kryo();
+        k.setInstantiatorStrategy(new StdInstantiatorStrategy());
+
         decorateKryo(k);
         factory.populateKryo(k);
         return k;
@@ -65,7 +68,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
         return new KryoSerializer(populatedKryo());
     }
 
-    public Deserializer<Object> getDeserializer(Class aClass) {
+    public Deserializer<Object> getDeserializer(Class<Object> aClass) {
         return new KryoDeserializer(populatedKryo(), aClass);
     }
 }
