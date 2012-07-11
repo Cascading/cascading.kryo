@@ -35,11 +35,19 @@ public class KryoSerialization extends Configured implements Serialization<Objec
         return k;
     }
 
+    /**
+     * override this to implement your own subclass of Kryo
+     * default is = new Kryo
+     */
+    public Kryo newKryo() {
+      return new Kryo();
+    }
+
     public final Kryo populatedKryo() {
         if (factory == null)
             factory = new KryoFactory(getConf());
 
-        Kryo k = new Kryo();
+        Kryo k = newKryo();
         k.setInstantiatorStrategy(new StdInstantiatorStrategy());
 
         decorateKryo(k);
