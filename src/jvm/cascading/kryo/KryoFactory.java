@@ -64,7 +64,7 @@ public class KryoFactory {
                     return serializerClass.getConstructor(com.esotericsoftware.kryo.Kryo.class).newInstance(k);
                 } catch (NoSuchMethodException ex2) {
                     try {
-                        return serializerClass.getConstructor(Class.class).newInstance(k, superClass);
+                        return serializerClass.getConstructor(Class.class).newInstance(superClass);
                     } catch (NoSuchMethodException ex3) {
                         return serializerClass.newInstance();
                     }

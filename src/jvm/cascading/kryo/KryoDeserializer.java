@@ -11,22 +11,25 @@ import java.io.InputStream;
 /** User: sritchie Date: 12/1/11 Time: 3:15 PM */
 public class KryoDeserializer implements Deserializer<Object> {
 
-    private final Kryo kryo;
+    private Kryo kryo;
+    private final KryoSerialization kryoSerialization;
     private final Class<Object> klass;
 
     private DataInputStream inputStream;
     private Input input = null;
 
-    public KryoDeserializer(Kryo kryo, Class<Object> klass) {
-        this.kryo =  kryo;
+    public KryoDeserializer(KryoSerialization kryoSerialization, Class<Object> klass) {
+        this.kryoSerialization =  kryoSerialization;
         this.klass = klass;
     }
 
     public void open(InputStream in) throws IOException {
+        kryo = kryoSerialization.populatedKryo();
+
         if( in instanceof DataInputStream)
-            this.inputStream = (DataInputStream) in;
+            inputStream = (DataInputStream) in;
         else
-            this.inputStream = new DataInputStream( in );
+            inputStream = new DataInputStream( in );
     }
 
     public Object deserialize(Object o) throws IOException {
@@ -42,6 +45,7 @@ public class KryoDeserializer implements Deserializer<Object> {
         return kryo.readObject(input, klass);
     }
 
+    // TODO: Bump the kryo version, add a kryo.reset();
     public void close() throws IOException {
         if( input != null )
             input.close();
