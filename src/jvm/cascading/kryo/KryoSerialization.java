@@ -27,21 +27,26 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     /**
-     *
-     * @param k
-     * @return
+     * Mutate the given instance (add custom serializers)
+     * This is called BEFORE the factory adds serializers
      */
-    public Kryo decorateKryo(Kryo k) {
-        return k;
+    public void decorateKryo(Kryo k) { }
+
+    /**
+     * override this to implement your own subclass of Kryo
+     * default is new Kryo with StdInstantiatorStrategy.
+     */
+    public Kryo newKryo() {
+      Kryo k = new Kryo();
+      k.setInstantiatorStrategy(new StdInstantiatorStrategy());
+      return k;
     }
 
     public final Kryo populatedKryo() {
         if (factory == null)
             factory = new KryoFactory(getConf());
 
-        Kryo k = new Kryo();
-        k.setInstantiatorStrategy(new StdInstantiatorStrategy());
-
+        Kryo k = newKryo();
         decorateKryo(k);
         factory.populateKryo(k);
         return k;
@@ -65,10 +70,10 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     public Serializer<Object> getSerializer(Class<Object> aClass) {
-        return new KryoSerializer(populatedKryo());
+        return new KryoSerializer(this);
     }
 
     public Deserializer<Object> getDeserializer(Class<Object> aClass) {
-        return new KryoDeserializer(populatedKryo(), aClass);
+        return new KryoDeserializer(this, aClass);
     }
 }
