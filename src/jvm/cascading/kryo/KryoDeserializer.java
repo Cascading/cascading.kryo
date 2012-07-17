@@ -4,53 +4,38 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.hadoop.io.serializer.Deserializer;
 
-import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 /** User: sritchie Date: 12/1/11 Time: 3:15 PM */
 public class KryoDeserializer implements Deserializer<Object> {
 
-    private final Kryo kryo;
+    private Kryo kryo;
+    private final KryoSerialization kryoSerialization;
     private final Class<Object> klass;
+    private Input input;
 
-    private DataInputStream inputStream;
-    private Input input = null;
-
-    public KryoDeserializer(Kryo kryo, Class<Object> klass) {
-        this.kryo =  kryo;
+    public KryoDeserializer(KryoSerialization kryoSerialization, Class<Object> klass) {
+        this.kryoSerialization =  kryoSerialization;
         this.klass = klass;
     }
 
     public void open(InputStream in) throws IOException {
-        if( in instanceof DataInputStream)
-            this.inputStream = (DataInputStream) in;
-        else
-            this.inputStream = new DataInputStream( in );
+        kryo = kryoSerialization.populatedKryo();
+        input = new Input(in);
     }
 
     public Object deserialize(Object o) throws IOException {
-        int len = inputStream.readInt();
-        byte[] bytes = new byte[len];
-        inputStream.readFully( bytes );
-
-        if (input == null)
-            input = new Input(bytes);
-        else
-            input.setBuffer(bytes);
-
         return kryo.readObject(input, klass);
     }
 
+    // TODO: Bump the kryo version, add a kryo.reset();
     public void close() throws IOException {
-        if( input != null )
-            input.close();
-
         try {
-            if( inputStream != null )
-                inputStream.close();
+            if( input != null )
+                input.close();
         } finally {
-            inputStream = null;
+            input = null;
         }
     }
 }
