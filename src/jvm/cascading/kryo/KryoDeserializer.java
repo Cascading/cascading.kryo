@@ -37,20 +37,18 @@ public class KryoDeserializer implements Deserializer<Object> {
         // Marking phase.
         InputStream inStream = input.getInputStream();
         inStream.mark(KryoSerialization.MAX_OUTPUT_BUFFER_SIZE);
-        int startingPos = input.position();
+
+        // Resetting input's limit and position forces input to continue reading from its wrapped
+        // stream at the marked position.
+        input.setPosition(0);
+        input.setLimit(0);
 
         // Reading phase.
         Object obj = kryo.readObject(input, klass);
-        int finalPos = input.position();
 
         // Skipping phase.
-        // inStream resets to the observed mark above. Resetting input's limit and position forces
-        // input to continue reading from its wrapped stream at the marked position.
         inStream.reset();
-        input.setPosition(0);
-        input.setLimit(0);
-        int needToSkip = finalPos - startingPos;
-
+        int needToSkip = input.position();
         while(needToSkip > 0)
             needToSkip -= inStream.skip(needToSkip);
 
