@@ -10,6 +10,9 @@ import org.objenesis.strategy.StdInstantiatorStrategy;
 
 /** User: sritchie Date: 12/1/11 Time: 11:43 AM */
 public class KryoSerialization extends Configured implements Serialization<Object> {
+    public static final int OUTPUT_BUFFER_SIZE = 1<<12;
+    public static final int MAX_OUTPUT_BUFFER_SIZE = 1<<24;
+
     Kryo kryo;
     KryoFactory factory;
 
