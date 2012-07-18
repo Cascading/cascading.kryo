@@ -10,9 +10,6 @@ import java.io.OutputStream;
 /** User: sritchie Date: 12/1/11 Time: 11:57 AM */
 @SuppressWarnings("FieldCanBeLocal")
 public class KryoSerializer implements Serializer<Object> {
-    private final int OUTPUT_BUFFER_SIZE = 1<<12;
-    private final int MAX_OUTPUT_BUFFER_SIZE = 1<<24;
-
     private Kryo kryo;
     private final KryoSerialization kryoSerialization;
     private Output output;
@@ -23,7 +20,7 @@ public class KryoSerializer implements Serializer<Object> {
 
     public void open(OutputStream out) throws IOException {
         kryo = kryoSerialization.populatedKryo();
-        output = new Output(OUTPUT_BUFFER_SIZE, MAX_OUTPUT_BUFFER_SIZE);
+        output = new Output(KryoSerialization.OUTPUT_BUFFER_SIZE, KryoSerialization.MAX_OUTPUT_BUFFER_SIZE);
         output.setOutputStream(out);
     }
 
