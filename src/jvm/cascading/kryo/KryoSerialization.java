@@ -12,7 +12,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     public static final int OUTPUT_BUFFER_SIZE = 1<<12;
     public static final int MAX_OUTPUT_BUFFER_SIZE = 1<<24;
 
-    public static final int TIDY_FACTOR = 4;
+    public static final int TIDY_FACTOR = 1<<4;
 
     public static final int SWITCH_LIMIT = Math.max(
         KryoSerialization.MAX_OUTPUT_BUFFER_SIZE, KryoSerialization.MAX_OUTPUT_BUFFER_SIZE / TIDY_FACTOR);
