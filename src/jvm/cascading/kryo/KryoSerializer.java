@@ -4,15 +4,16 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.hadoop.io.serializer.Serializer;
 
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/** User: sritchie Date: 12/1/11 Time: 11:57 AM */
-@SuppressWarnings("FieldCanBeLocal")
 public class KryoSerializer implements Serializer<Object> {
     private Kryo kryo;
     private final KryoSerialization kryoSerialization;
-    private Output output;
+    private final Output output = new Output(
+        KryoSerialization.OUTPUT_BUFFER_SIZE, KryoSerialization.MAX_OUTPUT_BUFFER_SIZE);
+    private DataOutputStream outputStream;
 
     public KryoSerializer(KryoSerialization kryoSerialization) {
         this.kryoSerialization =  kryoSerialization;
@@ -20,13 +21,28 @@ public class KryoSerializer implements Serializer<Object> {
 
     public void open(OutputStream out) throws IOException {
         kryo = kryoSerialization.populatedKryo();
-        output = new Output(KryoSerialization.OUTPUT_BUFFER_SIZE, KryoSerialization.MAX_OUTPUT_BUFFER_SIZE);
-        output.setOutputStream(out);
+
+        if( out instanceof DataOutputStream)
+            outputStream = (DataOutputStream) out;
+        else
+            outputStream = new DataOutputStream(out);
+    }
+
+    // This is to prevent output from maintaining a giant internal buffer.
+    public void tidyBuffer() {
+        if (output.position() > KryoSerialization.SWITCH_LIMIT)
+            output.setBuffer(new byte[KryoSerialization.OUTPUT_BUFFER_SIZE], KryoSerialization.MAX_OUTPUT_BUFFER_SIZE);
+        output.clear();
     }
 
     public void serialize(Object o) throws IOException {
         kryo.writeObject(output, o);
-        output.flush();
+        byte[] bytes = output.toBytes();
+
+        outputStream.writeInt(bytes.length);
+        outputStream.write(bytes);
+
+        tidyBuffer();
     }
 
     // TODO: Bump the kryo version, add a kryo.reset();
@@ -34,11 +50,11 @@ public class KryoSerializer implements Serializer<Object> {
         kryo = null;
 
         try {
-            if( output != null ) {
-                output.close();
+            if( outputStream != null ) {
+                outputStream.close();
             }
         } finally {
-            output = null;
+            outputStream = null;
         }
     }
 }
