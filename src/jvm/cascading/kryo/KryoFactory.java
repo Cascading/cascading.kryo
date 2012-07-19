@@ -8,7 +8,6 @@ import org.apache.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
-/** User: sritchie Date: 12/1/11 Time: 3:18 PM */
 public class KryoFactory {
     final Logger LOG = Logger.getLogger(KryoFactory.class);
     final Configuration conf;
