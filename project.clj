@@ -1,9 +1,9 @@
-(defproject cascading.kryo "0.4.4"
+(defproject cascading.kryo "0.4.5"
   :description "Kryo serialization for Cascading."
   :source-path "src/clj"
   :java-source-path "src/jvm"
   :javac-options {:debug "true" :fork "true"}
-  :dependencies [[com.esotericsoftware.kryo/kryo "2.16"]]
+  :dependencies [[com.esotericsoftware.kryo/kryo "2.17"]]
   :dev-dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]
                      [midje "1.4.0" :exclusions [org.clojure/clojure]]
                      [clojure "1.4.0"]
