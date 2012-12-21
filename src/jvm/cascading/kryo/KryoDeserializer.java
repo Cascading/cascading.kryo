@@ -10,40 +10,40 @@ import java.io.InputStream;
 
 public class KryoDeserializer implements Deserializer<Object> {
 
+    private java.io.DataInputStream is;
+    private Class<Object> klass;
+    private KryoSerialization ks;
     private Kryo kryo;
-    private final KryoSerialization kryoSerialization;
-    private final Class<Object> klass;
-
-    private DataInputStream inputStream;
 
     public KryoDeserializer(KryoSerialization kryoSerialization, Class<Object> klass) {
-        this.kryoSerialization =  kryoSerialization;
-        this.klass = klass;
+      this.klass = klass;
+      ks = kryoSerialization;
     }
 
     public void open(InputStream in) throws IOException {
-        kryo = kryoSerialization.populatedKryo();
-
-        if( in instanceof DataInputStream)
-            inputStream = (DataInputStream) in;
-        else
-            inputStream = new DataInputStream( in );
+        is = (java.io.DataInputStream)in;
+        kryo = ks.populatedKryo();
     }
 
     public Object deserialize(Object o) throws IOException {
-        byte[] bytes = new byte[inputStream.readInt()];
-        inputStream.readFully( bytes );
-
-        return kryo.readObject(new Input(bytes), klass);
+      System.out.println("about to deserialize a " + klass.getName());
+      int sz = is.readInt();
+      System.out.println("sz " + sz); 
+      byte[] b  = new byte[sz];
+      is.read(b);
+      //return(new java.io.ObjectInputStream(new java.io.ByteArrayInputStream(b))).readObject();
+      return(kryo.readObject(new Input(b), klass));
     }
 
     // TODO: Bump the kryo version, add a kryo.reset();
     public void close() throws IOException {
         try {
-            if( inputStream != null )
-                inputStream.close();
+            if(is != null) is.close();
+        } catch(Exception e ) {
+          e.printStackTrace();
         } finally {
-            inputStream = null;
+            is = null;
+            kryo = null;
         }
     }
 }
