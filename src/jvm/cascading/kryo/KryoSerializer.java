@@ -20,7 +20,7 @@ public class KryoSerializer implements Serializer<Object> {
 
   public void open(OutputStream out) throws IOException {
     if(out instanceof DataOutputStream)
-      os = (java.io.DataOutputStream)out;
+      os = (DataOutputStream)out;
     else
       os = new DataOutputStream(out);
     kryo = ks.populatedKryo();
