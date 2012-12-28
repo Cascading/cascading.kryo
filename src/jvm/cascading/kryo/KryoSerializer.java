@@ -43,8 +43,6 @@ public class KryoSerializer implements Serializer<Object> {
     try {
       if(os != null)
         os.close();
-    } catch(Exception e) {
-      e.printStackTrace();
     } finally {
       os = null;
       kryo = null;
