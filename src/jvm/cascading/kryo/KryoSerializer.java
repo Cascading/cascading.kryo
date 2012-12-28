@@ -5,11 +5,12 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.hadoop.io.serializer.Serializer;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 public class KryoSerializer implements Serializer<Object> {
-  private java.io.DataOutputStream os;
+  private DataOutputStream os;
   private KryoSerialization ks;
   private Kryo kryo;
 
@@ -18,7 +19,10 @@ public class KryoSerializer implements Serializer<Object> {
   }
 
   public void open(OutputStream out) throws IOException {
-    os = (java.io.DataOutputStream)out;
+    if(out instanceof DataOutputStream)
+      os = (java.io.DataOutputStream)out;
+    else
+      os = new DataOutputStream(out);
     kryo = ks.populatedKryo();
   }
 
