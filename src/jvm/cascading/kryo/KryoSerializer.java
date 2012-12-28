@@ -23,6 +23,7 @@ public class KryoSerializer implements Serializer<Object> {
   }
 
   public void serialize(Object o) throws IOException {
+    System.out.println("serialize" + o.getClass().getName());
     // get size in bytes of serialized form.
     FakeOutputStream fo = new FakeOutputStream();
     //(new java.io.ObjectOutputStream(fo)).writeObject(o);
@@ -38,6 +39,7 @@ public class KryoSerializer implements Serializer<Object> {
     os.writeInt(bho.size());
     os.write(bho.toByteArray(), 0, bho.size());
     os.flush();
+    System.out.println("done serialize, size " + size);
   }
 
   // TODO: Bump the kryo version, add a kryo.reset();
