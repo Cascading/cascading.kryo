@@ -10,42 +10,43 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class KryoSerializer implements Serializer<Object> {
-  private DataOutputStream os;
-  private KryoSerialization ks;
-  private Kryo kryo;
+    private Kryo kryo;
+    private final KryoSerialization kryoSerialization;
+    private DataOutputStream outputStream;
 
-  public KryoSerializer(KryoSerialization kryoSerialization) {
-    ks = kryoSerialization;
-  }
-
-  public void open(OutputStream out) throws IOException {
-    if(out instanceof DataOutputStream)
-      os = (DataOutputStream)out;
-    else
-      os = new DataOutputStream(out);
-    kryo = ks.populatedKryo();
-  }
-
-  public void serialize(Object o) throws IOException {
-    // Write output to temorary buffer.
-    ByteArrayOutputStream bho = new ByteArrayOutputStream();
-    Output ko = new Output(bho);
-    kryo.writeObject(ko, o);
-    ko.flush();
-    // Copy from buffer to output stream.
-    os.writeInt(bho.size());
-    os.write(bho.toByteArray(), 0, bho.size());
-    os.flush();
-  }
-
-  // TODO: Bump the kryo version, add a kryo.reset();
-  public void close() throws IOException {
-    try {
-      if(os != null)
-        os.close();
-    } finally {
-      os = null;
-      kryo = null;
+    public KryoSerializer(KryoSerialization kryoSerialization) {
+        this.kryoSerialization = kryoSerialization;
     }
-  }
+
+    public void open(OutputStream out) throws IOException {
+        kryo = kryoSerialization.populatedKryo();
+
+        if(out instanceof DataOutputStream)
+            outputStream = (DataOutputStream)out;
+        else
+            outputStream = new DataOutputStream(out);
+    }
+
+    public void serialize(Object o) throws IOException {
+        // Write output to temorary buffer.
+        ByteArrayOutputStream bho = new ByteArrayOutputStream();
+        Output ko = new Output(bho);
+        kryo.writeObject(ko, o);
+        ko.flush();
+        // Copy from buffer to output stream.
+        outputStream.writeInt(bho.size());
+        outputStream.write(bho.toByteArray(), 0, bho.size());
+        outputStream.flush();
+    }
+
+    // TODO: Bump the kryo version, add a kryo.reset();
+    public void close() throws IOException {
+        try {
+            if(outputStream != null)
+                outputStream.close();
+        } finally {
+            outputStream = null;
+            kryo = null;
+        }
+    }
 }
