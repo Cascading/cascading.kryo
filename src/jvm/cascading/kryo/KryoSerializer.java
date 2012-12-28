@@ -23,23 +23,15 @@ public class KryoSerializer implements Serializer<Object> {
   }
 
   public void serialize(Object o) throws IOException {
-    System.out.println("serialize" + o.getClass().getName());
-    // get size in bytes of serialized form.
-    FakeOutputStream fo = new FakeOutputStream();
-    //(new java.io.ObjectOutputStream(fo)).writeObject(o);
-    Output ko = new Output(fo);
+    // Write output to temorary buffer.
+    ByteArrayOutputStream bho = new ByteArrayOutputStream();
+    Output ko = new Output(bho);
     kryo.writeObject(ko, o);
     ko.flush();
-    int size = fo.size;
-    ByteArrayOutputStream bho = new ByteArrayOutputStream(size);
-    //(new java.io.ObjectOutputStream(bho)).writeObject(o);
-    ko = new Output(bho);
-    kryo.writeObject(ko, o);
-    ko.flush();
+    // Copy from buffer to output stream.
     os.writeInt(bho.size());
     os.write(bho.toByteArray(), 0, bho.size());
     os.flush();
-    System.out.println("done serialize, size " + size);
   }
 
   // TODO: Bump the kryo version, add a kryo.reset();
@@ -52,19 +44,6 @@ public class KryoSerializer implements Serializer<Object> {
     } finally {
       os = null;
       kryo = null;
-    }
-  }
-
-  static class FakeOutputStream extends OutputStream {
-    int size = 0;
-    public void write(int b) {
-      size += 4;
-    }
-    public void write(byte[] b) {
-      size += b.length;
-    }
-    public void write(byte[] b, int off, int len) {
-      size += len;
     }
   }
 }

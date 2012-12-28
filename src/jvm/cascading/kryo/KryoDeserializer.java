@@ -10,42 +10,40 @@ import java.io.InputStream;
 
 public class KryoDeserializer implements Deserializer<Object> {
 
-  private java.io.DataInputStream is;
-  private Class<Object> klass;
-  private KryoSerialization ks;
-  private Kryo kryo;
+    private Kryo kryo;
+    private final KryoSerialization kryoSerialization;
+    private final Class<Object> klass;
 
-  public KryoDeserializer(KryoSerialization kryoSerialization, Class<Object> klass) {
-    this.klass = klass;
-    ks = kryoSerialization;
-  }
+    private DataInputStream inputStream;
 
-  public void open(InputStream in) throws IOException {
-    is = (DataInputStream)in;
-    kryo = ks.populatedKryo();
-  }
-
-  public Object deserialize(Object o) throws IOException {
-    int sz = is.readInt();
-    System.out.println("deserialize " + klass.getName() + " size: " + sz);
-    byte[] b  = new byte[sz];
-    is.read(b);
-    //Object ob = null; try { ob = new java.io.ObjectInputStream(new java.io.ByteArrayInputStream(b)).readObject(); } catch (ClassNotFoundException e){ }
-    Object ob = kryo.readObject(new Input(b), klass);
-    System.out.println("done deserializing");
-    return ob;
-    //return(kryo.readObject(new Input(b), klass));
-  }
-
-  // TODO: Bump the kryo version, add a kryo.reset();
-  public void close() throws IOException {
-    try {
-      if(is != null) is.close();
-    } catch(Exception e ) {
-      e.printStackTrace();
-    } finally {
-      is = null;
-      kryo = null;
+    public KryoDeserializer(KryoSerialization kryoSerialization, Class<Object> klass) {
+        this.kryoSerialization =  kryoSerialization;
+        this.klass = klass;
     }
-  }
+
+    public void open(InputStream in) throws IOException {
+        kryo = kryoSerialization.populatedKryo();
+
+        if( in instanceof DataInputStream)
+            inputStream = (DataInputStream) in;
+        else
+            inputStream = new DataInputStream( in );
+    }
+
+    public Object deserialize(Object o) throws IOException {
+        byte[] bytes = new byte[inputStream.readInt()];
+        inputStream.readFully( bytes );
+
+        return kryo.readObject(new Input(bytes), klass);
+    }
+
+    // TODO: Bump the kryo version, add a kryo.reset();
+    public void close() throws IOException {
+        try {
+            if( inputStream != null )
+                inputStream.close();
+        } finally {
+            inputStream = null;
+        }
+    }
 }
