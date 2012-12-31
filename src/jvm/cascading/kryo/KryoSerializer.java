@@ -13,6 +13,7 @@ public class KryoSerializer implements Serializer<Object> {
     private Kryo kryo;
     private final KryoSerialization kryoSerialization;
     private DataOutputStream outputStream;
+    private ByteArrayOutputStream byteStream;
 
     public KryoSerializer(KryoSerialization kryoSerialization) {
         this.kryoSerialization = kryoSerialization;
@@ -20,7 +21,7 @@ public class KryoSerializer implements Serializer<Object> {
 
     public void open(OutputStream out) throws IOException {
         kryo = kryoSerialization.populatedKryo();
-
+        byteStream = new ByteArrayOutputStream();
         if(out instanceof DataOutputStream)
             outputStream = (DataOutputStream)out;
         else
@@ -28,14 +29,15 @@ public class KryoSerializer implements Serializer<Object> {
     }
 
     public void serialize(Object o) throws IOException {
+        // Clear buffer.
+        byteStream.reset();
         // Write output to temorary buffer.
-        ByteArrayOutputStream bho = new ByteArrayOutputStream();
-        Output ko = new Output(bho);
+        Output ko = new Output(byteStream);
         kryo.writeObject(ko, o);
         ko.flush();
         // Copy from buffer to output stream.
-        outputStream.writeInt(bho.size());
-        outputStream.write(bho.toByteArray(), 0, bho.size());
+        outputStream.writeInt(byteStream.size());
+        byteStream.writeTo(outputStream);
         outputStream.flush();
     }
 
@@ -47,6 +49,7 @@ public class KryoSerializer implements Serializer<Object> {
         } finally {
             outputStream = null;
             kryo = null;
+            
         }
     }
 }
