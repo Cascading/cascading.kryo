@@ -44,12 +44,13 @@ public class KryoSerializer implements Serializer<Object> {
     // TODO: Bump the kryo version, add a kryo.reset();
     public void close() throws IOException {
         try {
-            if(outputStream != null)
+            if(outputStream != null) {
                 outputStream.close();
+            }
         } finally {
             outputStream = null;
+            byteStream = null;
             kryo = null;
-            
         }
     }
 }
