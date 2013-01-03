@@ -9,13 +9,6 @@ import org.apache.hadoop.io.serializer.Serializer;
 import org.objenesis.strategy.StdInstantiatorStrategy;
 
 public class KryoSerialization extends Configured implements Serialization<Object> {
-    public static final int OUTPUT_BUFFER_SIZE = 1<<12;
-    public static final int MAX_OUTPUT_BUFFER_SIZE = 1<<24;
-
-    public static final int TIDY_FACTOR = 1<<4;
-
-    public static final int SWITCH_LIMIT = Math.max(
-        KryoSerialization.MAX_OUTPUT_BUFFER_SIZE, KryoSerialization.MAX_OUTPUT_BUFFER_SIZE / TIDY_FACTOR);
 
     Kryo kryo;
     KryoFactory factory;
