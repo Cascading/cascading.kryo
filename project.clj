@@ -1,11 +1,12 @@
-(defproject cascading.kryo "0.4.6"
+(defproject cascading.kryo "0.4.7-SNAPSHOT"
   :description "Kryo serialization for Cascading."
   :url "https://github.com/Cascading/cascading.kryo"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :source-paths ["src/clj"]
   :java-source-paths ["src/jvm"]
-  :plugins [[lein-clojars "0.9.1"]]
+  :plugins [[lein-clojars "0.9.1"]
+            [lein-midje "2.0.0-SNAPSHOT"]]
   :repositories {"conjars" "http://conjars.org/repo"}
   :dependencies [[com.esotericsoftware.kryo/kryo "2.17"]]
   :profiles {:dev
