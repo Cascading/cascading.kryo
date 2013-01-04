@@ -1,4 +1,4 @@
-(defproject cascading.kryo "0.4.6-SNAPSHOT"
+(defproject cascading.kryo "0.4.6"
   :description "Kryo serialization for Cascading."
   :url "https://github.com/Cascading/cascading.kryo"
   :license {:name "Eclipse Public License"
