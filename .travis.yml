@@ -4,4 +4,4 @@ branches:
     - develop
     - master
 lein: lein2
-script: lein2 compile, midje
+script: lein2 do compile, midje
