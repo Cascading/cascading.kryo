@@ -4,6 +4,10 @@
 
 Cascading.Kryo provides a drop-in [Kryo](http://code.google.com/p/kryo/) serialization for your Cascading (or Hadoop) workflow.
 
+## Compiling:
+
+This project uses [leiningen 2.0](https://github.com/technomancy/leiningen#leiningen) to build. To compile type `lein javac`.
+
 ## Usage
 
 Cascading.Kryo is hosted on www.clojars.org and www.conjars.org. See http://conjars.org/cascading.kryo for instructions on how to include Cascading.Kryo in your project.

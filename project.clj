@@ -11,6 +11,7 @@
   :dependencies [[com.esotericsoftware.kryo/kryo "2.17"]]
   :profiles {:dev
              {:dependencies [[org.apache.hadoop/hadoop-core "0.20.2-dev"]
+                             [log4j/log4j "1.2.16"]
                              [midje "1.4.0" :exclusions [org.clojure/clojure]]
                              [org.clojure/clojure "1.4.0"]
                              [lein-midje "1.0.9"]]}})
