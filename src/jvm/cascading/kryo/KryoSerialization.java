@@ -12,6 +12,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
 
     Kryo kryo;
     KryoFactory factory;
+    final boolean useUnbufferedSerialization;
 
     public KryoSerialization() {
         this(new Configuration());
@@ -24,6 +25,7 @@ public class KryoSerialization extends Configured implements Serialization<Objec
      */
     public KryoSerialization( Configuration conf ) {
         super( conf );
+        this.useUnbufferedSerialization = conf.getBoolean("cascading.kryo.unbuffered", false);
     }
 
     /**
@@ -70,10 +72,10 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     public Serializer<Object> getSerializer(Class<Object> aClass) {
-        return new KryoSerializer(this);
+        return useUnbufferedSerialization ? new UnBufferedKryoSerializer(this) : new KryoSerializer(this);
     }
 
     public Deserializer<Object> getDeserializer(Class<Object> aClass) {
-        return new KryoDeserializer(this, aClass);
+        return useUnbufferedSerialization ? new UnBufferedKryoDeserializer(this, aClass) : new KryoDeserializer(this, aClass);
     }
 }
