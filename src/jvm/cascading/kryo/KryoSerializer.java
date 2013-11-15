@@ -6,7 +6,6 @@ import org.apache.hadoop.io.serializer.Serializer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
-import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -15,12 +14,9 @@ public class KryoSerializer implements Serializer<Object> {
     private final KryoSerialization kryoSerialization;
     private DataOutputStream outputStream;
     private ByteArrayOutputStream byteStream;
-    private boolean fallBackToOOS;
 
     public KryoSerializer(KryoSerialization kryoSerialization) {
         this.kryoSerialization = kryoSerialization;
-        this.fallBackToOOS = kryoSerialization.getConf().getBoolean("cascading.kryo.java_serialization_fallback", false);
-        System.out.println("java_serialization_fallback: " + fallBackToOOS);
     }
 
     public void open(OutputStream out) throws IOException {
@@ -36,15 +32,9 @@ public class KryoSerializer implements Serializer<Object> {
         // Clear buffer.
         byteStream.reset();
         // Write output to temorary buffer.
-        if(fallBackToOOS) {
-          ObjectOutputStream oos = new ObjectOutputStream(byteStream);
-          oos.writeObject(o);
-          oos.flush();
-        } else {
-          Output ko = new Output(byteStream);
-          kryo.writeObject(ko, o);
-          ko.flush();
-        }
+        Output ko = new Output(byteStream);
+        kryo.writeObject(ko, o);
+        ko.flush();
         // Copy from buffer to output stream.
         outputStream.writeInt(byteStream.size());
         byteStream.writeTo(outputStream);
