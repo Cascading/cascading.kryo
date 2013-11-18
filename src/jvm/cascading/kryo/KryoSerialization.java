@@ -70,10 +70,12 @@ public class KryoSerialization extends Configured implements Serialization<Objec
     }
 
     public Serializer<Object> getSerializer(Class<Object> aClass) {
-        return new KryoSerializer(this);
+        boolean useUnbufferedSerialization = getConf().getBoolean("cascading.kryo.unbuffered", false);
+        return useUnbufferedSerialization ? new UnBufferedKryoSerializer(this) : new KryoSerializer(this);
     }
 
     public Deserializer<Object> getDeserializer(Class<Object> aClass) {
-        return new KryoDeserializer(this, aClass);
+        boolean useUnbufferedSerialization = getConf().getBoolean("cascading.kryo.unbuffered", false);
+        return useUnbufferedSerialization ? new UnBufferedKryoDeserializer(this, aClass) : new KryoDeserializer(this, aClass);
     }
 }
